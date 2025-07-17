@@ -96,10 +96,10 @@ def main():
         # Generate data button
         if st.button("🔄 Generate/Refresh Data", type="primary"):
             with st.spinner("Generating comprehensive RELA dataset..."):
-                # Generate datasets
-                members_df = data_gen.generate_members_data(3000000)  # 3 million members
-                operations_df = data_gen.generate_operations_data(50000)  # 50k operations
-                assignments_df = data_gen.generate_assignments_data(members_df, 200000)  # 200k assignments
+                # Generate datasets (reduced size for faster loading)
+                members_df = data_gen.generate_members_data(50000)  # 50k members for demo
+                operations_df = data_gen.generate_operations_data(5000)  # 5k operations
+                assignments_df = data_gen.generate_assignments_data(members_df, 20000)  # 20k assignments
                 
                 # Store in session state
                 st.session_state.members_df = members_df
