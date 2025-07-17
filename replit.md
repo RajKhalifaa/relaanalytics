@@ -99,4 +99,22 @@ Preferred communication style: Simple, everyday language.
 - **Government Styling**: Professional appearance suitable for government use
 - **RELA-Specific**: Tailored for Malaysian People's Volunteer Corps operations
 
-The application is designed to be easily extensible, with clear separation of concerns between data generation, analysis, and visualization components. The synthetic data approach allows for comprehensive testing without requiring real sensitive data.
+## Recent Changes
+
+### July 17, 2025 - Enhanced Data Realism
+- **Fixed Faker Locale Issue**: Resolved Malaysian locale configuration error by using supported English locale
+- **Authentic Malaysian Names**: Added comprehensive Malaysian name generation by ethnicity (Malay, Chinese, Indian)
+- **Realistic IC Numbers**: Implemented authentic Malaysian IC number format with proper state birth codes
+- **Smart Phone Numbers**: Enhanced phone generation with 80% mobile/20% landline distribution and proper area codes
+- **Intelligent Performance Correlation**: Performance scores now correlate with member experience, rank, and attendance
+- **Weather-based Success Rates**: Operation success rates affected by weather conditions and complexity
+- **Email Generation**: Created realistic email patterns based on actual names with Malaysian providers
+- **Training & Commendations**: Made training counts and commendations realistic based on years of service and rank
+- **Response Rate Logic**: Volunteer response rates now correlate with operation urgency and timing
+
+### Data Quality Improvements
+- **Optimized Dataset Size**: Reduced to 50K members, 5K operations, 20K assignments for faster loading
+- **Correlation Patterns**: Added logical relationships between age, experience, rank, performance, and attendance
+- **Malaysian Context**: Enhanced all data fields to reflect authentic Malaysian organizational structure
+
+The application is designed to be easily extensible, with clear separation of concerns between data generation, analysis, and visualization components. The enhanced synthetic data approach now provides highly realistic patterns without requiring real sensitive data.

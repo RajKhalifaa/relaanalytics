@@ -157,10 +157,10 @@ class DataGenerator:
                 'join_date': join_date,
                 'years_of_service': round(years_service, 1),
                 'phone_number': self._generate_malaysian_phone(),
-                'email': self.fake.email(),
-                'training_completed': random.randint(1, 15),
-                'operations_participated': random.randint(0, 50),
-                'commendations': random.randint(0, 5),
+                'email': self._generate_realistic_email(full_name),
+                'training_completed': self._generate_realistic_training(years_service, rank),
+                'operations_participated': self._generate_realistic_operations_count(years_service, status),
+                'commendations': self._generate_realistic_commendations(years_service, rank),
                 'last_active_date': self._generate_last_active_date(status),
                 'emergency_contact': self.fake.phone_number(),
                 'address': f"{self.fake.street_address()}, {district}, {state}",
@@ -206,6 +206,46 @@ class DataGenerator:
             
             volunteers_assigned = self._get_volunteers_by_complexity(complexity)
             
+            # More realistic success rate based on multiple factors
+            base_success_rate = 0.82
+            
+            # Complexity affects success rate
+            complexity_modifier = {'Low': 0.08, 'Medium': 0.03, 'High': -0.05, 'Critical': -0.12}
+            
+            # Weather affects success rate
+            weather = random.choices(
+                ['Clear', 'Rainy', 'Cloudy', 'Stormy'],
+                weights=[50, 25, 20, 5],
+                k=1
+            )[0]
+            weather_modifier = {'Clear': 0.05, 'Cloudy': 0.02, 'Rainy': -0.08, 'Stormy': -0.15}
+            
+            # Duration affects success rate (very long operations are harder)
+            duration_modifier = -0.01 * max(0, duration_hours - 8)
+            
+            final_success_rate = base_success_rate + complexity_modifier.get(complexity, 0) + \
+                               weather_modifier.get(weather, 0) + duration_modifier
+            final_success_rate = max(0.3, min(1.0, final_success_rate + random.uniform(-0.1, 0.1)))
+            
+            # Response rate correlates with operation urgency and timing
+            base_response_rate = 0.85
+            if complexity == 'Critical':
+                base_response_rate = 0.95
+            elif complexity == 'High':
+                base_response_rate = 0.9
+            
+            # Night operations have lower response rates
+            time_of_day = self._get_time_category(start_date.hour)
+            if time_of_day == 'Night':
+                base_response_rate -= 0.1
+            
+            volunteers_responded = int(volunteers_assigned * (base_response_rate + random.uniform(-0.05, 0.05)))
+            volunteers_responded = max(1, min(volunteers_assigned, volunteers_responded))
+            
+            # Budget allocation based on complexity and duration
+            base_budget = {'Low': 2000, 'Medium': 8000, 'High': 20000, 'Critical': 50000}
+            budget_allocated = base_budget[complexity] * (1 + duration_hours * 0.1) * random.uniform(0.8, 1.2)
+            
             operation = {
                 'operation_id': f"OPS{str(i+1).zfill(6)}",
                 'operation_name': f"{operation_type} - {district}",
@@ -222,17 +262,15 @@ class DataGenerator:
                 )[0],
                 'complexity': complexity,
                 'volunteers_assigned': volunteers_assigned,
-                'volunteers_responded': random.randint(
-                    int(volunteers_assigned * 0.7), volunteers_assigned
-                ),
-                'success_rate': random.uniform(0.75, 1.0),
-                'budget_allocated': random.uniform(1000, 50000),
-                'equipment_used': random.randint(5, 50),
-                'vehicles_deployed': random.randint(1, 10),
-                'public_impact_score': random.uniform(1, 10),
-                'media_coverage': random.choice([True, False]),
-                'weather_condition': random.choice(['Clear', 'Rainy', 'Cloudy', 'Stormy']),
-                'time_of_day': self._get_time_category(start_date.hour),
+                'volunteers_responded': volunteers_responded,
+                'success_rate': round(final_success_rate, 3),
+                'budget_allocated': round(budget_allocated, 2),
+                'equipment_used': random.randint(max(1, volunteers_assigned // 5), volunteers_assigned // 2),
+                'vehicles_deployed': random.randint(1, max(2, volunteers_assigned // 10)),
+                'public_impact_score': round(random.uniform(1, 10), 1),
+                'media_coverage': random.random() < (0.8 if complexity in ['High', 'Critical'] else 0.2),
+                'weather_condition': weather,
+                'time_of_day': time_of_day,
                 'created_at': datetime.now(),
                 'updated_at': datetime.now()
             }
@@ -264,9 +302,29 @@ class DataGenerator:
             assignment_type = random.choice(self.operation_types)
             assignment_date = self.fake.date_time_between(start_date='-1y', end_date='now')
             
-            # Performance metrics
-            attendance = random.choice([True, False]) if random.random() > 0.1 else True
-            performance_score = random.uniform(6, 10) if attendance else 0
+            # More realistic performance metrics
+            # Attendance rate correlates with member experience and rank
+            base_attendance_rate = 0.85
+            
+            # Adjust based on member characteristics
+            rank_bonus = {'Volunteer': 0, 'Senior Volunteer': 0.02, 'Team Leader': 0.05, 
+                         'Squad Leader': 0.07, 'Platoon Commander': 0.1}
+            rank_adj = rank_bonus.get(member.get('rank', 'Volunteer'), 0)
+            
+            years_bonus = min(member.get('years_of_service', 0) * 0.01, 0.1)
+            final_attendance_rate = min(base_attendance_rate + rank_adj + years_bonus, 0.95)
+            
+            attendance = random.random() < final_attendance_rate
+            
+            # Performance score based on attendance and experience
+            if attendance:
+                base_score = 7.0
+                experience_bonus = min(member.get('years_of_service', 0) * 0.1, 1.5)
+                rank_bonus_score = rank_bonus.get(member.get('rank', 'Volunteer'), 0) * 10
+                performance_score = min(base_score + experience_bonus + rank_bonus_score + random.uniform(-1, 1), 10)
+                performance_score = max(performance_score, 5.0)  # Minimum score for attending
+            else:
+                performance_score = 0
             
             assignment = {
                 'assignment_id': f"ASG{str(i+1).zfill(7)}",
@@ -297,7 +355,9 @@ class DataGenerator:
     
     def _generate_realistic_age(self):
         """Generate realistic age distribution for volunteers"""
-        return int(np.random.normal(40, 12))  # Mean 40, std 12
+        # More realistic age distribution for Malaysian volunteers
+        age = int(np.random.normal(42, 14))  # Mean 42, std 14
+        return max(18, min(75, age))  # Ensure within valid range
     
     def _get_age_group(self, age):
         """Categorize age into groups"""
@@ -315,25 +375,80 @@ class DataGenerator:
             return '65+'
     
     def _generate_ic_number(self):
-        """Generate Malaysian IC number format"""
-        year = random.randint(50, 99)
+        """Generate realistic Malaysian IC number format"""
+        # Generate birth year based on realistic age ranges
+        current_year = datetime.now().year
+        birth_year = current_year - random.randint(18, 75)
+        year_code = birth_year % 100
+        
         month = random.randint(1, 12)
         day = random.randint(1, 28)
-        place = random.randint(1, 99)
-        last_digits = random.randint(1000, 9999)
-        return f"{year:02d}{month:02d}{day:02d}{place:02d}{last_digits}"
+        
+        # Malaysian state birth place codes (realistic)
+        state_codes = {
+            'Johor': [1, 21, 22, 24],
+            'Kedah': [2, 25, 26, 27],
+            'Kelantan': [3, 28, 29],
+            'Malacca': [4, 30],
+            'Negeri Sembilan': [5, 31, 59],
+            'Pahang': [6, 32, 33],
+            'Penang': [7, 34, 35],
+            'Perak': [8, 36, 37, 38, 39],
+            'Perlis': [9, 40],
+            'Sabah': [12, 47, 48, 49],
+            'Sarawak': [13, 50, 51, 52, 53],
+            'Selangor': [10, 41, 42, 43, 44],
+            'Terengganu': [11, 45, 46],
+            'Kuala Lumpur': [14, 54, 55, 56, 57],
+            'Labuan': [15, 58],
+            'Putrajaya': [16]
+        }
+        
+        # Random state and corresponding place code
+        state = random.choice(list(state_codes.keys()))
+        place_code = random.choice(state_codes[state])
+        
+        # Last 4 digits (first 3 are sequence, last is check digit)
+        sequence = random.randint(100, 999)
+        check_digit = random.randint(0, 9)
+        
+        return f"{year_code:02d}{month:02d}{day:02d}{place_code:02d}{sequence}{check_digit}"
     
     def _generate_malaysian_phone(self):
-        """Generate Malaysian phone number format"""
-        prefixes = ['01', '03', '04', '05', '06', '07', '08', '09']
-        prefix = random.choice(prefixes)
-        if prefix == '01':
-            # Mobile numbers
-            middle = random.choice(['2', '3', '4', '5', '6', '7', '8', '9'])
-            number = f"01{middle}-{random.randint(1000000, 9999999)}"
-        else:
-            # Landline numbers
+        """Generate realistic Malaysian phone number format"""
+        # 80% mobile, 20% landline (realistic distribution)
+        if random.random() < 0.8:
+            # Mobile numbers (more realistic prefixes)
+            mobile_prefixes = ['010', '011', '012', '013', '014', '015', '016', '017', '018', '019']
+            prefix = random.choice(mobile_prefixes)
             number = f"{prefix}-{random.randint(1000000, 9999999)}"
+        else:
+            # Landline numbers by state
+            landline_prefixes = {
+                'Kuala Lumpur': '03',
+                'Selangor': '03',
+                'Johor': '07',
+                'Penang': '04',
+                'Perak': '05',
+                'Kedah': '04',
+                'Kelantan': '09',
+                'Terengganu': '09',
+                'Pahang': '09',
+                'Negeri Sembilan': '06',
+                'Malacca': '06',
+                'Sabah': '088',
+                'Sarawak': '082',
+                'Perlis': '04',
+                'Labuan': '087',
+                'Putrajaya': '03'
+            }
+            state = random.choice(list(landline_prefixes.keys()))
+            prefix = landline_prefixes[state]
+            if len(prefix) == 2:
+                number = f"{prefix}-{random.randint(1000000, 9999999)}"
+            else:  # 3-digit prefix for East Malaysia
+                number = f"{prefix}-{random.randint(100000, 999999)}"
+        
         return number
     
     def _generate_last_active_date(self, status):
@@ -400,3 +515,80 @@ class DataGenerator:
         else:  # Indigenous or Others
             # Use faker for other ethnicities
             return self.fake.name()
+    
+    def _generate_realistic_email(self, full_name):
+        """Generate realistic email addresses based on name"""
+        # Clean the name for email generation
+        name_parts = full_name.lower().replace(' bin ', ' ').replace(' binti ', ' ').replace(' bt. ', ' ').replace(' b. ', ' ').replace(' s/o ', ' ').replace(' a/l ', ' ').replace(' d/o ', ' ').replace(' a/p ', ' ').split()
+        
+        # Common email patterns
+        patterns = [
+            f"{name_parts[0]}.{name_parts[-1]}",
+            f"{name_parts[0]}{name_parts[-1]}",
+            f"{name_parts[0]}.{name_parts[-1]}{random.randint(1, 99)}",
+            f"{name_parts[0][0]}.{name_parts[-1]}",
+            f"{name_parts[0]}.{name_parts[-1][0]}"
+        ]
+        
+        # Malaysian email providers
+        providers = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'rela.gov.my']
+        weights = [40, 20, 15, 10, 15]  # rela.gov.my for official use
+        
+        pattern = random.choice(patterns)
+        provider = random.choices(providers, weights=weights, k=1)[0]
+        
+        # Clean pattern (remove special characters, limit length)
+        pattern = ''.join(c for c in pattern if c.isalnum() or c == '.')
+        pattern = pattern[:20]  # Limit length
+        
+        return f"{pattern}@{provider}"
+    
+    def _generate_realistic_training(self, years_service, rank):
+        """Generate realistic training count based on service years and rank"""
+        base_training = max(1, int(years_service * 1.5))  # 1.5 training per year on average
+        
+        # Rank multiplier (higher ranks tend to have more training)
+        rank_multiplier = {
+            'Volunteer': 1.0, 'Senior Volunteer': 1.2, 'Team Leader': 1.5,
+            'Squad Leader': 1.8, 'Platoon Commander': 2.2, 'Company Commander': 2.5,
+            'Battalion Commander': 3.0, 'District Commander': 3.5, 'State Commander': 4.0
+        }
+        
+        multiplier = rank_multiplier.get(rank, 1.0)
+        training_count = int(base_training * multiplier * random.uniform(0.8, 1.2))
+        
+        return max(1, min(training_count, 50))  # Reasonable limits
+    
+    def _generate_realistic_operations_count(self, years_service, status):
+        """Generate realistic operations participation count"""
+        if status == 'Inactive':
+            return random.randint(0, max(1, int(years_service * 2)))
+        elif status == 'On Leave':
+            return random.randint(0, max(1, int(years_service * 4)))
+        elif status == 'Training':
+            return random.randint(0, max(1, int(years_service * 3)))
+        else:  # Active
+            base_ops = int(years_service * 6)  # 6 operations per year average for active members
+            return max(0, int(base_ops * random.uniform(0.5, 1.5)))
+    
+    def _generate_realistic_commendations(self, years_service, rank):
+        """Generate realistic commendations based on service and rank"""
+        # Base chance increases with service years
+        base_chance = min(years_service * 0.05, 0.3)  # Max 30% chance
+        
+        # Rank bonus
+        rank_bonus = {
+            'Volunteer': 0, 'Senior Volunteer': 0.02, 'Team Leader': 0.05,
+            'Squad Leader': 0.08, 'Platoon Commander': 0.12, 'Company Commander': 0.15,
+            'Battalion Commander': 0.20, 'District Commander': 0.25, 'State Commander': 0.30
+        }
+        
+        final_chance = base_chance + rank_bonus.get(rank, 0)
+        
+        # Generate commendations
+        commendations = 0
+        for year in range(int(years_service)):
+            if random.random() < final_chance:
+                commendations += 1
+        
+        return min(commendations, 10)  # Reasonable maximum
