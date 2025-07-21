@@ -85,10 +85,11 @@ class Dashboard:
         
         with col1:
             st.markdown("### 📈 Member Growth Trend")
-            # Monthly registration trend
+            # Monthly registration trend - clean data first
             members_df['join_month'] = pd.to_datetime(members_df['join_date']).dt.to_period('M')
-            monthly_joins = members_df.groupby('join_month').size().reset_index(name='new_members')
+            monthly_joins = members_df.dropna(subset=['join_date']).groupby('join_month').size().reset_index(name='new_members')
             monthly_joins['join_month'] = monthly_joins['join_month'].astype(str)
+            monthly_joins = monthly_joins[monthly_joins['new_members'] > 0]  # Ensure positive values
             
             fig = px.line(
                 monthly_joins.tail(24),  # Last 24 months
@@ -365,10 +366,11 @@ class Dashboard:
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
-            # Monthly operations trend
+            # Monthly operations trend - clean data first
             operations_df['month'] = pd.to_datetime(operations_df['start_date']).dt.to_period('M')
-            monthly_ops = operations_df.groupby('month').size().reset_index(name='operations')
+            monthly_ops = operations_df.dropna(subset=['start_date']).groupby('month').size().reset_index(name='operations')
             monthly_ops['month'] = monthly_ops['month'].astype(str)
+            monthly_ops = monthly_ops[monthly_ops['operations'] > 0]  # Ensure positive values
             
             fig = px.line(
                 monthly_ops,
@@ -432,21 +434,23 @@ class Dashboard:
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            avg_performance = assignments_df['performance_score'].mean()
+            avg_performance = assignments_df['performance_score'].dropna().mean()
             st.metric("Average Performance", f"{avg_performance:.1f}/10")
         
         with col2:
-            attendance_rate = (assignments_df['attendance'].sum() / len(assignments_df)) * 100
+            clean_attendance = assignments_df.dropna(subset=['attendance'])
+            attendance_rate = (clean_attendance['attendance'].sum() / len(clean_attendance)) * 100 if len(clean_attendance) > 0 else 0
             st.metric("Attendance Rate", f"{attendance_rate:.1f}%")
         
         with col3:
-            high_performers = len(assignments_df[assignments_df['performance_score'] >= 8])
-            total_with_scores = len(assignments_df.dropna(subset=['performance_score']))
+            valid_scores = assignments_df.dropna(subset=['performance_score'])
+            high_performers = len(valid_scores[valid_scores['performance_score'] >= 8])
+            total_with_scores = len(valid_scores)
             high_perf_rate = (high_performers / total_with_scores) * 100 if total_with_scores > 0 else 0
             st.metric("High Performers", f"{high_perf_rate:.1f}%")
         
         with col4:
-            avg_feedback = assignments_df['feedback_score'].mean()
+            avg_feedback = assignments_df['feedback_score'].dropna().mean()
             st.metric("Avg Feedback", f"{avg_feedback:.1f}/5")
         
         # Performance trends
@@ -454,8 +458,11 @@ class Dashboard:
         
         with col1:
             st.markdown("### 📈 Performance Trend Over Time")
+            # Clean performance data first
             assignments_df['month'] = pd.to_datetime(assignments_df['assignment_date']).dt.to_period('M')
-            monthly_perf = assignments_df.groupby('month')['performance_score'].mean().reset_index()
+            clean_assignments = assignments_df.dropna(subset=['assignment_date', 'performance_score'])
+            clean_assignments = clean_assignments[clean_assignments['performance_score'] > 0]
+            monthly_perf = clean_assignments.groupby('month')['performance_score'].mean().reset_index()
             monthly_perf['month'] = monthly_perf['month'].astype(str)
             
             fig = px.line(
@@ -481,10 +488,13 @@ class Dashboard:
             )
             st.plotly_chart(fig, use_container_width=True)
         
-        # State performance comparison
+        # State performance comparison - clean data first
         st.markdown("### 🏛️ State Performance Comparison")
         
-        state_performance = assignments_df.groupby('state').agg({
+        # Clean assignments data for state analysis
+        clean_state_data = assignments_df.dropna(subset=['state', 'performance_score', 'feedback_score'])
+        
+        state_performance = clean_state_data.groupby('state').agg({
             'performance_score': 'mean',
             'attendance': lambda x: (x.sum() / len(x)) * 100,
             'feedback_score': 'mean'
@@ -829,10 +839,12 @@ class Dashboard:
             st.plotly_chart(fig_growth, use_container_width=True)
         
         with col2:
-            # Fixed Performance trends - now shows improvement over time
+            # Fixed Performance trends - clean data and show improvement
             assignments_df['assignment_date'] = pd.to_datetime(assignments_df['assignment_date'])
-            monthly_performance = assignments_df[assignments_df['performance_score'] > 0].groupby(
-                assignments_df['assignment_date'].dt.to_period('M')
+            clean_perf_data = assignments_df.dropna(subset=['assignment_date', 'performance_score'])
+            clean_perf_data = clean_perf_data[clean_perf_data['performance_score'] > 0]
+            monthly_performance = clean_perf_data.groupby(
+                clean_perf_data['assignment_date'].dt.to_period('M')
             )['performance_score'].mean()
             
             fig_perf = px.line(
@@ -879,9 +891,11 @@ class Dashboard:
             st.plotly_chart(fig_ops, use_container_width=True)
         
         with col2:
-            # Success rate trends
-            monthly_success = operations_df.groupby(
-                operations_df['start_date'].dt.to_period('M')
+            # Success rate trends - clean data first
+            clean_ops_success = operations_df.dropna(subset=['start_date', 'success_rate'])
+            clean_ops_success = clean_ops_success[clean_ops_success['success_rate'] > 0]
+            monthly_success = clean_ops_success.groupby(
+                clean_ops_success['start_date'].dt.to_period('M')
             )['success_rate'].mean()
             
             fig_success = px.line(
