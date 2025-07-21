@@ -507,14 +507,21 @@ class Dashboard:
         
         with col1:
             st.markdown("### 🔗 Training vs Performance")
-            # Merge with member data to get training info
+            # Merge with member data to get training info and clean data
             perf_training = assignments_df.merge(
                 members_df[['member_id', 'training_completed']],
                 on='member_id'
             )
             
+            # Clean data: remove NaN values and ensure valid ranges
+            perf_training_clean = perf_training.dropna(subset=['training_completed', 'performance_score'])
+            perf_training_clean = perf_training_clean[
+                (perf_training_clean['training_completed'] >= 0) & 
+                (perf_training_clean['performance_score'] > 0)
+            ]
+            
             fig = px.scatter(
-                perf_training,
+                perf_training_clean,
                 x='training_completed',
                 y='performance_score',
                 title="Training Completed vs Performance Score",
