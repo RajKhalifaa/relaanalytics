@@ -650,6 +650,13 @@ class Dashboard:
         
         ml_manager = MLModelManager()
         
+        # Try to load existing model first
+        model_loaded = ml_manager.load_model('performance_prediction')
+        if model_loaded:
+            st.info("✅ Pre-trained ML model loaded automatically for predictions")
+        else:
+            st.warning("⚠️ No trained model found - train a model first for better predictions")
+        
         # Model Training Section
         col1, col2 = st.columns(2)
         
@@ -873,7 +880,35 @@ class Dashboard:
         st.markdown("---")
         st.subheader('🔮 Predictive Analytics & Future Forecasting')
         
+        # Explain how ML models integrate with forecasting
+        with st.expander("ℹ️ How ML Models Work with Predictions"):
+            st.markdown("""
+            **📖 Model Integration Explanation:**
+            
+            **For ML Performance Prediction:**
+            - When you train models above, they learn patterns from member data (age, experience, rank, etc.)
+            - These trained models are automatically saved and used for individual member performance predictions
+            - The models predict how well specific members will perform based on their characteristics
+            
+            **For Time Series Forecasting:**
+            - This uses historical trends in operations, performance, and resources over time
+            - It analyzes monthly patterns and creates mathematical models to predict future values
+            - This is separate from ML models but complements them for comprehensive analytics
+            
+            **Data Source:**
+            - Both use the same data (loaded from saved files or newly generated)
+            - Predictions are based on actual historical patterns in your data
+            - The more historical data you have, the more accurate the predictions become
+            """)
+        
         forecast_engine = ForecastingEngine()
+        
+        # Show ML model integration status
+        if model_loaded and hasattr(st.session_state, 'ml_metadata'):
+            ml_metadata = st.session_state.ml_metadata
+            st.success(f"🤖 ML Model Active: {ml_metadata['best_model_name'].upper()} with {ml_metadata['performance_metrics']['test_r2']:.1%} accuracy")
+        else:
+            st.info("💡 Train ML models above to enhance member-specific predictions")
         
         # Forecasting controls
         col1, col2, col3 = st.columns(3)
@@ -933,6 +968,10 @@ class Dashboard:
                                 st.metric("Predicted Avg Performance", f"{avg_perf_predicted:.2f}/10")
                             with metric_col2:
                                 st.metric("Predicted Avg Attendance", f"{avg_attendance_predicted:.1%}")
+                            
+                            # Add ML-enhanced predictions if model is available
+                            if model_loaded:
+                                st.info("🤖 Enhanced with ML model predictions for individual member analysis")
                         else:
                             st.error('❌ Unable to generate performance forecast - insufficient data')
                     
@@ -1069,6 +1108,88 @@ class Dashboard:
                 
             for insight in insights:
                 st.info(insight)
+                
+        # ML-Enhanced Member Predictions Section
+        if model_loaded and hasattr(st.session_state, 'ml_metadata'):
+            st.markdown("---")
+            st.subheader('🎯 ML-Enhanced Member Performance Predictions')
+            
+            col1, col2 = st.columns([1, 2])
+            
+            with col1:
+                st.markdown("**🔍 Individual Member Analysis**")
+                
+                # Sample member selection for prediction
+                sample_members = members_df.sample(min(10, len(members_df))).copy()
+                member_options = [f"{row['name']} ({row['member_id']}) - {row['rank']}" 
+                                for _, row in sample_members.iterrows()]
+                
+                selected_member = st.selectbox("Select Member for Prediction:", member_options)
+                
+                if st.button("🔮 Predict Performance", type="secondary"):
+                    selected_idx = member_options.index(selected_member)
+                    member_data = sample_members.iloc[[selected_idx]]
+                    
+                    # Prepare features for the selected member
+                    try:
+                        feature_df = ml_manager.prepare_performance_features(members_df, operations_df, assignments_df)
+                        member_feature_data = feature_df[feature_df['member_id'] == member_data['member_id'].iloc[0]]
+                        
+                        if not member_feature_data.empty:
+                            prediction_result, msg = ml_manager.predict_member_performance(member_feature_data)
+                            
+                            if prediction_result:
+                                predicted_score = prediction_result['predictions'][0]
+                                confidence_lower = prediction_result['confidence_lower'][0]
+                                confidence_upper = prediction_result['confidence_upper'][0]
+                                model_name = prediction_result['model_name']
+                                
+                                st.success(f"**Predicted Performance: {predicted_score:.2f}/10**")
+                                st.write(f"Model: {model_name.upper()}")
+                                st.write(f"Confidence Range: {confidence_lower:.2f} - {confidence_upper:.2f}")
+                                
+                                # Performance interpretation
+                                if predicted_score >= 8.0:
+                                    st.success("🌟 Excellent performance expected")
+                                elif predicted_score >= 6.5:
+                                    st.info("👍 Good performance expected")
+                                elif predicted_score >= 5.0:
+                                    st.warning("⚠️ Average performance - consider additional training")
+                                else:
+                                    st.error("❌ Below average performance - needs attention")
+                            else:
+                                st.error("Unable to generate prediction for this member")
+                        else:
+                            st.warning("No historical data found for this member")
+                    except Exception as e:
+                        st.error(f"Prediction error: {str(e)}")
+            
+            with col2:
+                st.markdown("**📊 Model Performance Summary**")
+                
+                if hasattr(st.session_state, 'ml_metadata'):
+                    metadata = st.session_state.ml_metadata
+                    
+                    # Key metrics
+                    metrics = metadata['performance_metrics']
+                    
+                    col1_m, col2_m, col3_m = st.columns(3)
+                    with col1_m:
+                        accuracy_pct = metrics['test_r2'] * 100
+                        st.metric("Model Accuracy", f"{accuracy_pct:.1f}%")
+                    with col2_m:
+                        st.metric("Cross-Val Score", f"{metrics['cv_r2_mean']:.3f}")
+                    with col3_m:
+                        st.metric("Prediction Error", f"{metrics['test_mae']:.2f}")
+                    
+                    # Top prediction factors
+                    st.markdown("**🔑 Top Performance Factors:**")
+                    top_features = list(metadata['feature_importance'].keys())[:5]
+                    for i, feature in enumerate(top_features, 1):
+                        importance = metadata['feature_importance'][feature]
+                        st.write(f"{i}. {feature.replace('_', ' ').title()}: {importance:.3f}")
+                    
+                    st.info("💡 These factors most strongly predict member performance based on historical data")
         
         # Recruitment trends
         st.markdown("### 👥 Recruitment Trends")

@@ -20,13 +20,14 @@ class ForecastingEngine:
         df[date_column] = pd.to_datetime(df[date_column])
         
         if frequency == 'M':
-            time_series = df.groupby(df[date_column].dt.to_period('M'))[value_column].agg(['count', 'mean', 'sum']).reset_index()
+            # For counting operations, we just need the count, not mean/sum of IDs
+            time_series = df.groupby(df[date_column].dt.to_period('M')).size().reset_index(name='count')
             time_series['date'] = time_series[date_column].dt.to_timestamp()
         elif frequency == 'W':
-            time_series = df.groupby(df[date_column].dt.to_period('W'))[value_column].agg(['count', 'mean', 'sum']).reset_index()
+            time_series = df.groupby(df[date_column].dt.to_period('W')).size().reset_index(name='count')
             time_series['date'] = time_series[date_column].dt.to_timestamp()
         else:  # Daily
-            time_series = df.groupby(df[date_column].dt.date)[value_column].agg(['count', 'mean', 'sum']).reset_index()
+            time_series = df.groupby(df[date_column].dt.date).size().reset_index(name='count')
             time_series['date'] = pd.to_datetime(time_series[date_column])
         
         time_series = time_series.sort_values('date').reset_index(drop=True)
