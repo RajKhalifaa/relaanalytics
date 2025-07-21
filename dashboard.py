@@ -7,8 +7,11 @@ import numpy as np
 from datetime import datetime, timedelta
 import json
 
+from translations import get_text
+
 class Dashboard:
-    def __init__(self):
+    def __init__(self, language='en'):
+        self.language = language
         self.colors = {
             'primary': '#1f4e79',
             'secondary': '#2d5aa0',
@@ -21,8 +24,9 @@ class Dashboard:
     def show_overview(self, data):
         """Main overview dashboard"""
         members_df, operations_df, assignments_df = data
+        lang = self.language
         
-        st.markdown("## 📊 Executive Dashboard Overview")
+        st.markdown(f"## 📊 {get_text(lang, 'overview', 'Executive Dashboard Overview')}")
         
         # Key Performance Indicators
         col1, col2, col3, col4, col5 = st.columns(5)

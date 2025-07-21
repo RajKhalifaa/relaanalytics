@@ -1,0 +1,185 @@
+"""
+Translations for RELA Malaysia Dashboard
+Supports English and Malay languages
+"""
+
+translations = {
+    'en': {
+        # Main Header
+        'app_title': 'RELA MALAYSIA',
+        'app_subtitle': 'Jabatan Sukarelawan Malaysia - Analytics Dashboard',
+        'app_description': 'Malaysia Volunteers Corps Department | Comprehensive Operations Analytics',
+        
+        # Navigation
+        'navigation': 'Navigation',
+        'language_selector': 'Language / Bahasa',
+        'overview': '🏠 Overview',
+        'member_analytics': '👥 Member Analytics',
+        'operations': '🚨 Operations',
+        'performance': '📊 Performance',
+        'regional_analysis': '🗺️ Regional Analysis',
+        'trends': '📈 Trends',
+        'reports': '📋 Reports',
+        
+        # Data Controls
+        'data_controls': 'Data Controls',
+        'generate_data': '🔄 Generate/Refresh Data',
+        'data_ready': '✅ Data Ready',
+        'click_generate': '⚠️ Click \'Generate Data\' to start',
+        'quick_filters': 'Quick Filters',
+        'date_range': '📅 Date Range',
+        'states_territories': '🏛️ States/Territories',
+        'member_status': '📊 Member Status',
+        
+        # Status Options
+        'active': 'Active',
+        'inactive': 'Inactive',
+        'on_leave': 'On Leave',
+        'training': 'Training',
+        
+        # Welcome Message
+        'welcome_message': '🚀 Welcome to RELA Malaysia Analytics Dashboard. Please generate the dataset using the sidebar to begin analysis.',
+        
+        # About RELA
+        'about_rela': 'About RELA Malaysia',
+        'about_description': 'The People\'s Volunteer Corps (RELA) is Malaysia\'s largest civil volunteer organization with over 3 million members nationwide.',
+        'core_functions': 'Core Functions',
+        'core_functions_list': [
+            'Security control and monitoring',
+            'Emergency response operations', 
+            'Immigration assistance',
+            'Community safety programs'
+        ],
+        'coverage': 'Coverage',
+        'coverage_list': [
+            'All 13 states + 3 federal territories',
+            'Urban and rural areas',
+            '24/7 operations capability',
+            'Multi-ethnic volunteer force'
+        ],
+        
+        # KPI Labels
+        'total_members': '👥 Total Members',
+        'total_operations': '🚨 Total Operations',
+        'assignments': '📋 Assignments',
+        'avg_performance': '⭐ Avg Performance',
+        'states_territories_metric': '🏛️ States/Territories',
+        'full_coverage': 'Full Coverage',
+        'excellent': 'Excellent',
+        'complete': 'Complete',
+        'attendance': 'Attendance',
+        
+        # Chart Titles
+        'member_growth_trend': '📈 Member Growth Trend',
+        'operations_by_type': '🎯 Operations by Type',
+        'state_member_distribution': '🗺️ State-wise Member Distribution',
+        'performance_analytics': '📊 Performance Analytics',
+        'activity_heatmap': '🕒 Operational Activity Heatmap',
+        
+        # Data Generation Messages
+        'generating_dataset': 'Generating comprehensive RELA dataset...',
+        'data_generated': '✅ Data generated successfully!',
+        
+        # Common Labels
+        'members': 'Members',
+        'operations_label': 'Operations',
+        'volunteers': 'Volunteers',
+        'hour_of_day': 'Hour of Day',
+        'day_of_week': 'Day of Week'
+    },
+    
+    'ms': {
+        # Main Header
+        'app_title': 'RELA MALAYSIA',
+        'app_subtitle': 'Jabatan Sukarelawan Malaysia - Papan Pemuka Analitik',
+        'app_description': 'Jabatan Sukarelawan Malaysia | Analitik Operasi Komprehensif',
+        
+        # Navigation
+        'navigation': 'Navigasi',
+        'language_selector': 'Bahasa / Language',
+        'overview': '🏠 Gambaran Keseluruhan',
+        'member_analytics': '👥 Analitik Ahli',
+        'operations': '🚨 Operasi',
+        'performance': '📊 Prestasi',
+        'regional_analysis': '🗺️ Analisis Wilayah',
+        'trends': '📈 Trend',
+        'reports': '📋 Laporan',
+        
+        # Data Controls
+        'data_controls': 'Kawalan Data',
+        'generate_data': '🔄 Jana/Kemaskini Data',
+        'data_ready': '✅ Data Sedia',
+        'click_generate': '⚠️ Klik \'Jana Data\' untuk mula',
+        'quick_filters': 'Penapis Pantas',
+        'date_range': '📅 Julat Tarikh',
+        'states_territories': '🏛️ Negeri/Wilayah',
+        'member_status': '📊 Status Ahli',
+        
+        # Status Options
+        'active': 'Aktif',
+        'inactive': 'Tidak Aktif',
+        'on_leave': 'Bercuti',
+        'training': 'Latihan',
+        
+        # Welcome Message
+        'welcome_message': '🚀 Selamat datang ke Papan Pemuka Analitik RELA Malaysia. Sila jana set data menggunakan bar sisi untuk memulakan analisis.',
+        
+        # About RELA
+        'about_rela': 'Mengenai RELA Malaysia',
+        'about_description': 'Pasukan Sukarelawan Rakyat (RELA) adalah organisasi sukarelawan sivil terbesar Malaysia dengan lebih 3 juta ahli di seluruh negara.',
+        'core_functions': 'Fungsi Utama',
+        'core_functions_list': [
+            'Kawalan dan pemantauan keselamatan',
+            'Operasi tindak balas kecemasan',
+            'Bantuan imigresen',
+            'Program keselamatan komuniti'
+        ],
+        'coverage': 'Liputan',
+        'coverage_list': [
+            'Semua 13 negeri + 3 wilayah persekutuan',
+            'Kawasan bandar dan luar bandar',
+            'Keupayaan operasi 24/7',
+            'Pasukan sukarelawan pelbagai kaum'
+        ],
+        
+        # KPI Labels
+        'total_members': '👥 Jumlah Ahli',
+        'total_operations': '🚨 Jumlah Operasi',
+        'assignments': '📋 Tugasan',
+        'avg_performance': '⭐ Purata Prestasi',
+        'states_territories_metric': '🏛️ Negeri/Wilayah',
+        'full_coverage': 'Liputan Penuh',
+        'excellent': 'Cemerlang',
+        'complete': 'Lengkap',
+        'attendance': 'Kehadiran',
+        
+        # Chart Titles
+        'member_growth_trend': '📈 Trend Pertumbuhan Ahli',
+        'operations_by_type': '🎯 Operasi Mengikut Jenis',
+        'state_member_distribution': '🗺️ Taburan Ahli Mengikut Negeri',
+        'performance_analytics': '📊 Analitik Prestasi',
+        'activity_heatmap': '🕒 Peta Haba Aktiviti Operasi',
+        
+        # Data Generation Messages
+        'generating_dataset': 'Menjana set data RELA yang komprehensif...',
+        'data_generated': '✅ Data berjaya dijana!',
+        
+        # Common Labels
+        'members': 'Ahli',
+        'operations_label': 'Operasi',
+        'volunteers': 'Sukarelawan',
+        'hour_of_day': 'Jam dalam Hari',
+        'day_of_week': 'Hari dalam Minggu'
+    }
+}
+
+def get_text(language, key, default=""):
+    """Get translated text for given language and key"""
+    return translations.get(language, {}).get(key, default or key)
+
+def get_language_options():
+    """Get available language options"""
+    return {
+        'English': 'en',
+        'Bahasa Malaysia': 'ms'
+    }
