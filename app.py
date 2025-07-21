@@ -72,19 +72,51 @@ if 'language' not in st.session_state:
     st.session_state.language = 'en'  # Default to English
 
 def render_header(lang):
-    """Render the main header with language support"""
-    st.markdown(f"""
-    <div class="main-header">
-        <h1>🇲🇾 {get_text(lang, 'app_title')}</h1>
-        <p>{get_text(lang, 'app_subtitle')}</p>
-        <p style="font-size: 0.9rem; margin-top: 0.5rem;">{get_text(lang, 'app_description')}</p>
+    """Render the main header with RELA logo and language support"""
+    
+    # Create header with logo and title
+    col1, col2, col3 = st.columns([1, 3, 1])
+    
+    with col1:
+        # Display RELA logo
+        try:
+            st.image("assets/rela_logo.jpg", width=120)
+        except:
+            st.write("🇲🇾")  # Fallback if logo not found
+    
+    with col2:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 10px;">
+            <h1 style="color: #1f4e79; margin: 0; font-size: 2.5rem;">RELA MALAYSIA</h1>
+            <h3 style="color: #2d5aa0; margin: 5px 0; font-size: 1.3rem;">Analytics Dashboard</h3>
+            <p style="color: #666; margin: 5px 0; font-size: 1rem;">Powered by <strong>Credence AI & Analytics</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        # Language selector in the header
+        pass
+    # Main header with RELA branding
+    st.markdown("""
+    <div style="background: linear-gradient(90deg, #1f4e79 0%, #2d5aa0 100%); 
+                padding: 1rem; border-radius: 10px; margin-bottom: 2rem;">
+        <p style="color: #e8f4fd; text-align: center; margin: 0; font-size: 1.1rem;">
+            Comprehensive Member Management & Operations Analytics
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
 def main():
     # Language selector in sidebar
     with st.sidebar:
-        st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Flag_of_Malaysia.svg/320px-Flag_of_Malaysia.svg.png", width=200)
+        # Display RELA logo in sidebar
+        try:
+            st.image("assets/rela_logo.jpg", width=180)
+        except:
+            st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Flag_of_Malaysia.svg/320px-Flag_of_Malaysia.svg.png", width=180)
+        
+        st.markdown("**RELA MALAYSIA**")
+        st.markdown("*People's Volunteer Corps*")
         
         # Language selection
         language_options = get_language_options()
