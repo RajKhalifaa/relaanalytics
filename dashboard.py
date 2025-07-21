@@ -9,6 +9,7 @@ import json
 
 from translations import get_text
 from ml_model_manager import MLModelManager
+from forecasting_engine import ForecastingEngine
 
 class Dashboard:
     def __init__(self, language='en'):
@@ -867,6 +868,207 @@ class Dashboard:
             fig_success.update_layout(height=400)
             fig_success.update_xaxes(tickangle=45)
             st.plotly_chart(fig_success, use_container_width=True)
+        
+        # Future Forecasting Section
+        st.markdown("---")
+        st.subheader('🔮 Predictive Analytics & Future Forecasting')
+        
+        forecast_engine = ForecastingEngine()
+        
+        # Forecasting controls
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            months_ahead = st.selectbox(
+                "Forecast Period", 
+                [3, 6, 12, 24], 
+                index=1,
+                help="Select how many months ahead to forecast"
+            )
+        
+        with col2:
+            forecast_type = st.selectbox(
+                "Forecast Type",
+                ["Operations", "Performance", "Resources"],
+                help="Choose what to forecast"
+            )
+        
+        with col3:
+            if st.button('🚀 Generate Forecast', type="primary"):
+                with st.spinner(f'Generating {forecast_type.lower()} forecast for next {months_ahead} months...'):
+                    
+                    if forecast_type == "Operations":
+                        forecast_data, msg = forecast_engine.forecast_operations(operations_df, months_ahead)
+                        if forecast_data:
+                            st.session_state.operations_forecast = forecast_data
+                            st.success(f'✅ Operations forecast generated for next {months_ahead} months!')
+                            
+                            # Show summary metrics
+                            total_predicted = forecast_data['overall_forecast']['predicted_operations'].sum()
+                            avg_monthly = total_predicted / months_ahead
+                            
+                            metric_col1, metric_col2, metric_col3 = st.columns(3)
+                            with metric_col1:
+                                st.metric("Total Predicted Operations", f"{total_predicted:,}")
+                            with metric_col2:
+                                st.metric("Average Monthly Operations", f"{avg_monthly:.0f}")
+                            with metric_col3:
+                                accuracy = forecast_data['accuracy_metrics']['r2_score']
+                                st.metric("Forecast Accuracy", f"{accuracy:.1%}")
+                        else:
+                            st.error('❌ Unable to generate operations forecast - insufficient data')
+                    
+                    elif forecast_type == "Performance":
+                        forecast_data, msg = forecast_engine.forecast_member_performance(assignments_df, months_ahead)
+                        if forecast_data:
+                            st.session_state.performance_forecast = forecast_data
+                            st.success(f'✅ Performance forecast generated for next {months_ahead} months!')
+                            
+                            # Show performance predictions
+                            avg_perf_predicted = forecast_data['performance_forecast']['predicted_performance'].mean()
+                            avg_attendance_predicted = forecast_data['performance_forecast']['predicted_attendance'].mean()
+                            
+                            metric_col1, metric_col2 = st.columns(2)
+                            with metric_col1:
+                                st.metric("Predicted Avg Performance", f"{avg_perf_predicted:.2f}/10")
+                            with metric_col2:
+                                st.metric("Predicted Avg Attendance", f"{avg_attendance_predicted:.1%}")
+                        else:
+                            st.error('❌ Unable to generate performance forecast - insufficient data')
+                    
+                    elif forecast_type == "Resources":
+                        forecast_data, msg = forecast_engine.forecast_resource_needs(operations_df, assignments_df, months_ahead)
+                        if forecast_data:
+                            st.session_state.resource_forecast = forecast_data
+                            st.success(f'✅ Resource forecast generated for next {months_ahead} months!')
+                            
+                            # Show resource predictions
+                            total_volunteers = forecast_data['resource_forecast']['predicted_volunteers'].sum()
+                            total_budget = forecast_data['resource_forecast']['predicted_budget'].sum()
+                            
+                            metric_col1, metric_col2 = st.columns(2)
+                            with metric_col1:
+                                st.metric("Total Volunteers Needed", f"{total_volunteers:,}")
+                            with metric_col2:
+                                st.metric("Total Budget Required", f"RM {total_budget:,.0f}")
+        
+        # Display forecast visualizations
+        st.markdown("---")
+        
+        # Operations Forecast Visualization
+        if hasattr(st.session_state, 'operations_forecast') and st.session_state.operations_forecast:
+            st.subheader('📊 Operations Forecast Visualization')
+            
+            forecast_data = st.session_state.operations_forecast
+            charts = forecast_engine.create_forecast_visualizations(forecast_data, 'operations')
+            
+            # Main forecast chart
+            st.plotly_chart(charts['main_forecast'], use_container_width=True)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(charts['state_breakdown'], use_container_width=True)
+            with col2:
+                st.plotly_chart(charts['monthly_breakdown'], use_container_width=True)
+            
+            # Forecast accuracy info
+            with st.expander("📈 Forecast Model Information"):
+                accuracy_metrics = forecast_data['accuracy_metrics']
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Model Accuracy (R²)", f"{accuracy_metrics['r2_score']:.3f}")
+                with col2:
+                    st.metric("Mean Absolute Error", f"{accuracy_metrics['mae']:.1f}")
+                with col3:
+                    st.metric("Mean Abs. Percentage Error", f"{accuracy_metrics['mape']:.1f}%")
+                
+                st.info("📌 Forecast uses polynomial trend modeling with seasonal adjustments based on historical patterns")
+        
+        # Performance Forecast Visualization
+        if hasattr(st.session_state, 'performance_forecast') and st.session_state.performance_forecast:
+            st.subheader('📈 Performance Forecast Visualization')
+            
+            forecast_data = st.session_state.performance_forecast
+            charts = forecast_engine.create_forecast_visualizations(forecast_data, 'performance')
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(charts['performance_forecast'], use_container_width=True)
+            with col2:
+                st.plotly_chart(charts['attendance_forecast'], use_container_width=True)
+        
+        # Resource Forecast Visualization
+        if hasattr(st.session_state, 'resource_forecast') and st.session_state.resource_forecast:
+            st.subheader('🛠️ Resource Requirements Forecast')
+            
+            forecast_data = st.session_state.resource_forecast
+            charts = forecast_engine.create_forecast_visualizations(forecast_data, 'resources')
+            
+            st.plotly_chart(charts['resource_forecast'], use_container_width=True)
+            
+            # Resource planning insights
+            with st.expander("💡 Resource Planning Insights"):
+                resource_forecast = forecast_data['resource_forecast']
+                
+                total_volunteers = resource_forecast['predicted_volunteers'].sum()
+                total_budget = resource_forecast['predicted_budget'].sum()
+                total_equipment = resource_forecast['predicted_equipment'].sum()
+                total_vehicles = resource_forecast['predicted_vehicles'].sum()
+                
+                st.write("**Resource Requirements Summary:**")
+                st.write(f"• **Total Volunteers Needed**: {total_volunteers:,}")
+                st.write(f"• **Total Budget Required**: RM {total_budget:,.0f}")
+                st.write(f"• **Equipment Units**: {total_equipment:,}")
+                st.write(f"• **Vehicles Required**: {total_vehicles:,}")
+                
+                # Peak month analysis
+                peak_month = resource_forecast.loc[resource_forecast['predicted_volunteers'].idxmax()]
+                st.write(f"• **Peak Activity Month**: {peak_month['date'].strftime('%B %Y')}")
+                st.write(f"• **Peak Volunteers**: {peak_month['predicted_volunteers']:,}")
+        
+        # Forecasting insights and recommendations
+        if (hasattr(st.session_state, 'operations_forecast') or 
+            hasattr(st.session_state, 'performance_forecast') or 
+            hasattr(st.session_state, 'resource_forecast')):
+            
+            st.markdown("---")
+            st.subheader('🎯 Strategic Insights & Recommendations')
+            
+            insights = []
+            
+            if hasattr(st.session_state, 'operations_forecast'):
+                ops_data = st.session_state.operations_forecast['overall_forecast']
+                trend = "increasing" if ops_data['predicted_operations'].iloc[-1] > ops_data['predicted_operations'].iloc[0] else "decreasing"
+                insights.append(f"📈 Operations are {trend} over the forecast period")
+                
+                peak_month = ops_data.loc[ops_data['predicted_operations'].idxmax()]
+                insights.append(f"🔴 Peak operations expected in {peak_month['date'].strftime('%B %Y')} with {peak_month['predicted_operations']} operations")
+            
+            if hasattr(st.session_state, 'performance_forecast'):
+                perf_data = st.session_state.performance_forecast['performance_forecast']
+                perf_trend = "improving" if perf_data['predicted_performance'].iloc[-1] > perf_data['predicted_performance'].iloc[0] else "declining"
+                insights.append(f"📊 Member performance is {perf_trend} over the forecast period")
+                
+                avg_perf = perf_data['predicted_performance'].mean()
+                if avg_perf > 7.5:
+                    insights.append("🌟 Excellent performance levels expected - maintain current training programs")
+                elif avg_perf > 6.0:
+                    insights.append("👍 Good performance expected - consider additional skill development")
+                else:
+                    insights.append("⚠️ Performance may need attention - recommend enhanced training initiatives")
+            
+            if hasattr(st.session_state, 'resource_forecast'):
+                resource_data = st.session_state.resource_forecast['resource_forecast']
+                budget_trend = "increasing" if resource_data['predicted_budget'].iloc[-1] > resource_data['predicted_budget'].iloc[0] else "decreasing"
+                insights.append(f"💰 Budget requirements are {budget_trend} over the forecast period")
+                
+                volunteer_trend = "increasing" if resource_data['predicted_volunteers'].iloc[-1] > resource_data['predicted_volunteers'].iloc[0] else "decreasing"
+                if volunteer_trend == "increasing":
+                    insights.append("👥 Consider recruitment campaigns to meet growing volunteer demand")
+                
+            for insight in insights:
+                st.info(insight)
         
         # Recruitment trends
         st.markdown("### 👥 Recruitment Trends")
