@@ -94,8 +94,8 @@ class ForecastingEngine:
             'predicted_operations': np.round(predictions_adjusted).astype(int),
             'trend_component': np.round(predictions).astype(int),
             'seasonal_factor': seasonal_factors,
-            'month': future_dates.month,
-            'year': future_dates.year
+            'month': future_dates.to_series().dt.month.values,
+            'year': future_dates.to_series().dt.year.values
         })
         
         # Add state-wise breakdown based on historical distribution
@@ -195,8 +195,8 @@ class ForecastingEngine:
             'date': future_dates,
             'predicted_performance': perf_predictions,
             'predicted_attendance': attendance_predictions,
-            'month': future_dates.month,
-            'year': future_dates.year
+            'month': future_dates.to_series().dt.month.values,
+            'year': future_dates.to_series().dt.year.values
         })
         
         return {
@@ -230,16 +230,16 @@ class ForecastingEngine:
         # Create models for different resources
         resource_forecasts = {}
         
+        # Generate future dates first
+        last_date = monthly_resources['date'].max()
+        future_dates = pd.date_range(
+            start=last_date + timedelta(days=30), 
+            periods=months_ahead, 
+            freq='MS'
+        )
+        
         for column in ['total_volunteers', 'total_budget', 'total_equipment', 'total_vehicles']:
             model, poly, start_date = self.create_trend_model(monthly_resources['date'], monthly_resources[column])
-            
-            # Generate future dates
-            last_date = monthly_resources['date'].max()
-            future_dates = pd.date_range(
-                start=last_date + timedelta(days=30), 
-                periods=months_ahead, 
-                freq='MS'
-            )
             
             # Make predictions
             future_x = (future_dates - start_date).days.values.reshape(-1, 1)
@@ -257,8 +257,8 @@ class ForecastingEngine:
             'predicted_budget': resource_forecasts['total_budget'].astype(int),
             'predicted_equipment': resource_forecasts['total_equipment'].astype(int),
             'predicted_vehicles': resource_forecasts['total_vehicles'].astype(int),
-            'month': future_dates.month,
-            'year': future_dates.year
+            'month': future_dates.to_series().dt.month.values,
+            'year': future_dates.to_series().dt.year.values
         })
         
         return {

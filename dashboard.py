@@ -386,9 +386,12 @@ class Dashboard:
         col1, col2 = st.columns(2)
         
         with col1:
-            # Volunteers vs Success Rate
+            # Volunteers vs Success Rate - clean data first
+            clean_ops = operations_df.dropna(subset=['volunteers_assigned', 'success_rate', 'duration_hours'])
+            clean_ops = clean_ops[clean_ops['duration_hours'] > 0]
+            
             fig = px.scatter(
-                operations_df,
+                clean_ops,
                 x='volunteers_assigned',
                 y='success_rate',
                 color='complexity',
@@ -522,8 +525,12 @@ class Dashboard:
         
         with col2:
             st.markdown("### ⏱️ Duration vs Performance")
+            # Filter out NaN values and ensure valid data for scatter plot
+            clean_assignments = assignments_df.dropna(subset=['duration_hours', 'performance_score', 'feedback_score'])
+            clean_assignments = clean_assignments[clean_assignments['feedback_score'] > 0]
+            
             fig = px.scatter(
-                assignments_df,
+                clean_assignments,
                 x='duration_hours',
                 y='performance_score',
                 color='assignment_type',
@@ -627,8 +634,12 @@ class Dashboard:
                 st.plotly_chart(fig, use_container_width=True)
             
             with col2:
+                # Ensure no NaN values in district stats
+                district_clean = district_stats.reset_index().dropna()
+                district_clean = district_clean[district_clean['Members'] > 0]
+                
                 fig = px.scatter(
-                    district_stats.reset_index(),
+                    district_clean,
                     x='Avg Years Service',
                     y='Avg Age',
                     size='Members',
