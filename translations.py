@@ -89,12 +89,37 @@ translations = {
         'data_ready': '✅ Data Ready',
         'click_generate': '⚠️ Click \'Generate Data\' to start',
         
+        # Predictive Analytics
+        'predictive_analytics': '🤖 Predictive Analytics & Machine Learning',
+        'train_models': '🤖 Train ML Models',
+        'load_models': '📂 Load Saved Models',
+        'generate_forecast': '🔮 Generate Forecasts',
+        'training_models': 'Training machine learning models...',
+        'models_trained': 'Models trained successfully!',
+        'models_loaded': 'Models loaded successfully!',
+        'no_saved_models': 'No saved models found. Train models first.',
+        'model_training_failed': 'Model training failed. Need more data.',
+        'historical_trends': 'Historical Trends',
+        'future_operations': 'Future Operations Forecast',
+        'performance_insights': 'Performance Insights',
+        'key_factors': 'Key Performance Factors',
+        'feature_importance': 'Feature Importance',
+        'forecast_by_state': 'Forecast by State',
+        'predicted_operations': 'Predicted Operations',
+        'model_performance': 'Model Performance',
+        'performance_trends': 'Performance Trends (Monthly Average)',
+        'cumulative_members': 'Cumulative Members',
+        
         # Common Labels
         'members': 'Members',
         'operations_label': 'Operations',
         'volunteers': 'Volunteers',
         'hour_of_day': 'Hour of Day',
-        'day_of_week': 'Day of Week'
+        'day_of_week': 'Day of Week',
+        'month': 'Month',
+        'importance': 'Importance',
+        'features': 'Features',
+        'operations': 'Operations'
     },
     
     'ms': {
@@ -181,12 +206,37 @@ translations = {
         'generating_dataset': 'Menjana set data RELA yang komprehensif...',
         'data_generated': '✅ Data berjaya dijana!',
         
+        # Predictive Analytics - Bahasa Malaysia
+        'predictive_analytics': '🤖 Analitik Ramalan & Pembelajaran Mesin',
+        'train_models': '🤖 Latih Model ML',
+        'load_models': '📂 Muat Model Tersimpan',
+        'generate_forecast': '🔮 Jana Ramalan',
+        'training_models': 'Melatih model pembelajaran mesin...',
+        'models_trained': 'Model berjaya dilatih!',
+        'models_loaded': 'Model berjaya dimuat!',
+        'no_saved_models': 'Tiada model tersimpan. Latih model dahulu.',
+        'model_training_failed': 'Latihan model gagal. Perlu lebih banyak data.',
+        'historical_trends': 'Trend Sejarah',
+        'future_operations': 'Ramalan Operasi Masa Depan',
+        'performance_insights': 'Wawasan Prestasi',
+        'key_factors': 'Faktor Prestasi Utama',
+        'feature_importance': 'Kepentingan Ciri',
+        'forecast_by_state': 'Ramalan mengikut Negeri',
+        'predicted_operations': 'Operasi Diramal',
+        'model_performance': 'Prestasi Model',
+        'performance_trends': 'Trend Prestasi (Purata Bulanan)',
+        'cumulative_members': 'Ahli Terkumpul',
+        
         # Common Labels
         'members': 'Ahli',
         'operations_label': 'Operasi',
         'volunteers': 'Sukarelawan',
         'hour_of_day': 'Jam dalam Hari',
-        'day_of_week': 'Hari dalam Minggu'
+        'day_of_week': 'Hari dalam Minggu',
+        'month': 'Bulan',
+        'importance': 'Kepentingan',
+        'features': 'Ciri-ciri',
+        'operations': 'Operasi'
     }
 }
 

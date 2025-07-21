@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import math
 from faker import Faker
 from datetime import datetime, timedelta
 import random
@@ -316,13 +317,23 @@ class DataGenerator:
             
             attendance = random.random() < final_attendance_rate
             
-            # Performance score based on attendance and experience
+            # Performance score based on attendance, experience, and temporal improvement
             if attendance:
                 base_score = 7.0
                 experience_bonus = min(member.get('years_of_service', 0) * 0.1, 1.5)
                 rank_bonus_score = rank_bonus.get(member.get('rank', 'Volunteer'), 0) * 10
-                performance_score = min(base_score + experience_bonus + rank_bonus_score + random.uniform(-1, 1), 10)
-                performance_score = max(performance_score, 5.0)  # Minimum score for attending
+                
+                # Add temporal improvement trend (performance improves over time due to training/experience)
+                days_from_start = (assignment_date - datetime(2023, 1, 1)).days
+                temporal_improvement = min(days_from_start * 0.0005, 1.0)  # Gradual improvement over time
+                
+                # Seasonal variations (slightly better performance in certain months)
+                month_factor = 1.0 + 0.1 * math.sin((assignment_date.month - 1) * math.pi / 6)
+                
+                performance_score = base_score + experience_bonus + rank_bonus_score + temporal_improvement
+                performance_score *= month_factor
+                performance_score += random.uniform(-0.8, 0.8)  # Reduced random variation
+                performance_score = min(max(performance_score, 5.0), 10.0)  # Bounds checking
             else:
                 performance_score = 0
             

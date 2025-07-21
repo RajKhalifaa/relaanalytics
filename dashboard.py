@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import json
 
 from translations import get_text
+from predictive_analytics import PredictiveAnalytics
 
 class Dashboard:
     def __init__(self, language='en'):
@@ -636,10 +637,113 @@ class Dashboard:
                 st.plotly_chart(fig, use_container_width=True)
     
     def show_trends(self, data):
-        """Trends analysis dashboard"""
+        """Trends analysis dashboard with predictive analytics"""
         members_df, operations_df, assignments_df = data
+        lang = self.language
         
-        st.markdown("## 📈 Trends Analysis Dashboard")
+        st.markdown(f"## 📈 {get_text(lang, 'trends', 'Trends & Predictive Analytics')}")
+        
+        # Predictive Analytics Section
+        st.markdown("---")
+        st.subheader(get_text(lang, 'predictive_analytics', '🤖 Predictive Analytics & Machine Learning'))
+        
+        pred_analytics = PredictiveAnalytics()
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button(get_text(lang, 'train_models', '🤖 Train ML Models'), type="primary"):
+                with st.spinner(get_text(lang, 'training_models', 'Training machine learning models...')):
+                    # Prepare features
+                    feature_df = pred_analytics.prepare_features(members_df, operations_df, assignments_df)
+                    
+                    # Train models
+                    perf_metrics, perf_msg = pred_analytics.train_performance_prediction_model(feature_df)
+                    ops_metrics, ops_msg = pred_analytics.train_operations_prediction_model(operations_df, assignments_df)
+                    
+                    if perf_metrics and ops_metrics:
+                        st.success('🎉 Models trained successfully!')
+                        st.metric("Performance Model R²", f"{perf_metrics['r2_score']:.3f}")
+                        st.metric("Operations Model R²", f"{ops_metrics['r2_score']:.3f}")
+                    else:
+                        st.error('❌ Model training failed - need more data')
+        
+        with col2:
+            if st.button(get_text(lang, 'load_models', '📂 Load Saved Models')):
+                perf_loaded = pred_analytics.load_model('performance_prediction')
+                ops_loaded = pred_analytics.load_model('operations_prediction')
+                
+                if perf_loaded and ops_loaded:
+                    st.success('✅ Models loaded successfully!')
+                else:
+                    st.warning('⚠️ No saved models found')
+        
+        with col3:
+            if st.button(get_text(lang, 'generate_forecast', '🔮 Generate Forecasts')):
+                if pred_analytics.load_model('operations_prediction'):
+                    future_ops, msg = pred_analytics.predict_future_operations(months_ahead=6)
+                    
+                    if future_ops is not None:
+                        st.success('✅ 6-month forecast generated!')
+                        
+                        # Show forecast summary
+                        total_predicted = future_ops['predicted_operations'].sum()
+                        st.metric("Predicted Operations (6 months)", f"{total_predicted:,}")
+                        
+                        # Store forecast for visualization
+                        st.session_state.forecast_data = future_ops
+                
+        # Show forecast visualization if available
+        if hasattr(st.session_state, 'forecast_data') and st.session_state.forecast_data is not None:
+            st.markdown("---")
+            st.subheader('🔮 Future Operations Forecast (Next 6 Months)')
+            
+            forecast_data = st.session_state.forecast_data
+            
+            # Monthly forecast chart
+            monthly_forecast = forecast_data.groupby(['year', 'month']).agg({
+                'predicted_operations': 'sum'
+            }).reset_index()
+            monthly_forecast['month_year'] = monthly_forecast['year'].astype(str) + '-' + monthly_forecast['month'].astype(str).str.zfill(2)
+            
+            fig_forecast = px.bar(
+                monthly_forecast,
+                x='month_year',
+                y='predicted_operations',
+                title='Predicted Monthly Operations',
+                color='predicted_operations',
+                color_continuous_scale='viridis'
+            )
+            fig_forecast.update_layout(height=400)
+            st.plotly_chart(fig_forecast, use_container_width=True)
+            
+            # State-wise breakdown
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                state_forecast = forecast_data.groupby('state')['predicted_operations'].sum().sort_values(ascending=False)
+                
+                fig_state = px.pie(
+                    values=state_forecast.values,
+                    names=state_forecast.index,
+                    title='Predicted Operations by State'
+                )
+                fig_state.update_layout(height=400)
+                st.plotly_chart(fig_state, use_container_width=True)
+            
+            with col2:
+                operation_forecast = forecast_data.groupby('operation_type')['predicted_operations'].sum().sort_values(ascending=False)
+                
+                fig_ops = px.bar(
+                    x=operation_forecast.values,
+                    y=operation_forecast.index,
+                    orientation='h',
+                    title='Predicted Operations by Type'
+                )
+                fig_ops.update_layout(height=400)
+                st.plotly_chart(fig_ops, use_container_width=True)
+        
+        st.markdown("---")
         
         # Recruitment trends
         st.markdown("### 👥 Recruitment Trends")

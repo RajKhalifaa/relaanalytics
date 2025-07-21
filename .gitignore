@@ -3,6 +3,11 @@ data/
 *.csv
 *.json
 
+# Machine Learning Models
+models/
+*.pkl
+*.joblib
+
 # Python cache
 __pycache__/
 *.py[cod]
