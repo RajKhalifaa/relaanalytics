@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 
 from translations import get_text
-from predictive_analytics import PredictiveAnalytics
+from ml_model_manager import MLModelManager
 
 class Dashboard:
     def __init__(self, language='en'):
@@ -643,107 +643,230 @@ class Dashboard:
         
         st.markdown(f"## 📈 {get_text(lang, 'trends', 'Trends & Predictive Analytics')}")
         
-        # Predictive Analytics Section
+        # Machine Learning & Predictive Analytics Section
         st.markdown("---")
-        st.subheader(get_text(lang, 'predictive_analytics', '🤖 Predictive Analytics & Machine Learning'))
+        st.subheader(get_text(lang, 'predictive_analytics', '🤖 Machine Learning & Predictive Analytics'))
         
-        pred_analytics = PredictiveAnalytics()
+        ml_manager = MLModelManager()
         
-        col1, col2, col3 = st.columns(3)
+        # Model Training Section
+        col1, col2 = st.columns(2)
         
         with col1:
-            if st.button(get_text(lang, 'train_models', '🤖 Train ML Models'), type="primary"):
-                with st.spinner(get_text(lang, 'training_models', 'Training machine learning models...')):
-                    # Prepare features
-                    feature_df = pred_analytics.prepare_features(members_df, operations_df, assignments_df)
-                    
-                    # Train models
-                    perf_metrics, perf_msg = pred_analytics.train_performance_prediction_model(feature_df)
-                    ops_metrics, ops_msg = pred_analytics.train_operations_prediction_model(operations_df, assignments_df)
-                    
-                    if perf_metrics and ops_metrics:
-                        st.success('🎉 Models trained successfully!')
-                        st.metric("Performance Model R²", f"{perf_metrics['r2_score']:.3f}")
-                        st.metric("Operations Model R²", f"{ops_metrics['r2_score']:.3f}")
-                    else:
-                        st.error('❌ Model training failed - need more data')
+            st.markdown("**🚀 Train Best Performance Model**")
+            if st.button(get_text(lang, 'train_models', '🤖 Train & Select Best Model'), type="primary"):
+                with st.spinner(get_text(lang, 'training_models', 'Training multiple ML models and selecting best...')):
+                    try:
+                        # Prepare enhanced features
+                        feature_df = ml_manager.prepare_performance_features(members_df, operations_df, assignments_df)
+                        
+                        # Train and select best model
+                        metadata, msg = ml_manager.train_and_select_best_model(feature_df)
+                        
+                        if metadata:
+                            st.success(f'🎉 Best Model Selected: {metadata["best_model_name"].upper()}')
+                            
+                            # Show key metrics
+                            metrics = metadata['performance_metrics']
+                            col1_m, col2_m, col3_m = st.columns(3)
+                            
+                            with col1_m:
+                                st.metric("🎯 Accuracy (R²)", f"{metrics['test_r2']:.4f}")
+                            with col2_m:
+                                st.metric("📊 CV Score", f"{metrics['cv_r2_mean']:.4f}")
+                            with col3_m:
+                                st.metric("🔍 Error (MAE)", f"{metrics['test_mae']:.3f}")
+                            
+                            # Store metadata for display
+                            st.session_state.ml_metadata = metadata
+                        else:
+                            st.error('❌ Model training failed - insufficient data')
+                    except Exception as e:
+                        st.error(f'❌ Training error: {str(e)}')
         
         with col2:
-            if st.button(get_text(lang, 'load_models', '📂 Load Saved Models')):
-                perf_loaded = pred_analytics.load_model('performance_prediction')
-                ops_loaded = pred_analytics.load_model('operations_prediction')
-                
-                if perf_loaded and ops_loaded:
-                    st.success('✅ Models loaded successfully!')
+            st.markdown("**📂 Load Saved Model**")
+            if st.button(get_text(lang, 'load_models', '📂 Load Best Model')):
+                if ml_manager.load_model('performance_prediction'):
+                    st.success('✅ Best model loaded successfully!')
+                    st.session_state.ml_metadata = ml_manager.model_metadata.get('performance_prediction')
                 else:
-                    st.warning('⚠️ No saved models found')
+                    st.warning('⚠️ No saved models found - train a model first')
         
-        with col3:
-            if st.button(get_text(lang, 'generate_forecast', '🔮 Generate Forecasts')):
-                if pred_analytics.load_model('operations_prediction'):
-                    future_ops, msg = pred_analytics.predict_future_operations(months_ahead=6)
-                    
-                    if future_ops is not None:
-                        st.success('✅ 6-month forecast generated!')
-                        
-                        # Show forecast summary
-                        total_predicted = future_ops['predicted_operations'].sum()
-                        st.metric("Predicted Operations (6 months)", f"{total_predicted:,}")
-                        
-                        # Store forecast for visualization
-                        st.session_state.forecast_data = future_ops
-                
-        # Show forecast visualization if available
-        if hasattr(st.session_state, 'forecast_data') and st.session_state.forecast_data is not None:
+        # Model Performance Display Section
+        if hasattr(st.session_state, 'ml_metadata') and st.session_state.ml_metadata:
+            metadata = st.session_state.ml_metadata
+            
             st.markdown("---")
-            st.subheader('🔮 Future Operations Forecast (Next 6 Months)')
+            st.subheader('📊 Model Performance Dashboard')
             
-            forecast_data = st.session_state.forecast_data
+            # Main metrics
+            col1, col2, col3, col4 = st.columns(4)
+            metrics = metadata['performance_metrics']
             
-            # Monthly forecast chart
-            monthly_forecast = forecast_data.groupby(['year', 'month']).agg({
-                'predicted_operations': 'sum'
-            }).reset_index()
-            monthly_forecast['month_year'] = monthly_forecast['year'].astype(str) + '-' + monthly_forecast['month'].astype(str).str.zfill(2)
+            with col1:
+                st.metric("🏆 Best Model", metadata['best_model_name'].upper())
+            with col2:
+                accuracy_pct = metrics['test_r2'] * 100
+                st.metric("🎯 Accuracy", f"{accuracy_pct:.1f}%", f"{metrics['cv_r2_std']:.3f} std")
+            with col3:
+                st.metric("📈 Training R²", f"{metrics['train_r2']:.4f}")
+            with col4:
+                overfitting = "Low" if metrics['overfitting_score'] < 0.05 else "Medium" if metrics['overfitting_score'] < 0.15 else "High"
+                st.metric("🔍 Overfitting", overfitting, f"{metrics['overfitting_score']:.3f}")
             
-            fig_forecast = px.bar(
-                monthly_forecast,
-                x='month_year',
-                y='predicted_operations',
-                title='Predicted Monthly Operations',
-                color='predicted_operations',
-                color_continuous_scale='viridis'
-            )
-            fig_forecast.update_layout(height=400)
-            st.plotly_chart(fig_forecast, use_container_width=True)
-            
-            # State-wise breakdown
+            # Model Comparison Chart
             col1, col2 = st.columns(2)
             
             with col1:
-                state_forecast = forecast_data.groupby('state')['predicted_operations'].sum().sort_values(ascending=False)
+                st.markdown("**🏁 Model Comparison**")
+                comparison_data = metadata['model_comparison']
                 
-                fig_state = px.pie(
-                    values=state_forecast.values,
-                    names=state_forecast.index,
-                    title='Predicted Operations by State'
-                )
-                fig_state.update_layout(height=400)
-                st.plotly_chart(fig_state, use_container_width=True)
+                models = list(comparison_data.keys())
+                cv_scores = [comparison_data[model]['cv_score'] for model in models]
+                test_scores = [comparison_data[model]['test_r2'] for model in models]
+                
+                comparison_df = pd.DataFrame({
+                    'Model': models,
+                    'CV Score': cv_scores,
+                    'Test Score': test_scores
+                })
+                
+                fig = px.bar(comparison_df, 
+                           x='Model', 
+                           y=['CV Score', 'Test Score'],
+                           title='Model Performance Comparison',
+                           barmode='group')
+                fig.update_layout(height=400)
+                st.plotly_chart(fig, use_container_width=True)
             
             with col2:
-                operation_forecast = forecast_data.groupby('operation_type')['predicted_operations'].sum().sort_values(ascending=False)
+                st.markdown("**🔑 Feature Importance (Top 10)**")
+                feature_importance = metadata['feature_importance']
                 
-                fig_ops = px.bar(
-                    x=operation_forecast.values,
-                    y=operation_forecast.index,
-                    orientation='h',
-                    title='Predicted Operations by Type'
-                )
-                fig_ops.update_layout(height=400)
-                st.plotly_chart(fig_ops, use_container_width=True)
+                if feature_importance:
+                    top_features = list(feature_importance.items())[:10]
+                    feature_names = [item[0] for item in top_features]
+                    feature_values = [item[1] for item in top_features]
+                    
+                    fig = px.bar(
+                        x=feature_values,
+                        y=feature_names,
+                        orientation='h',
+                        title='Most Important Performance Factors'
+                    )
+                    fig.update_layout(height=400)
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            # Training Details
+            with st.expander("📋 Detailed Training Information"):
+                training_info = metadata['training_info']
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("📊 Training Samples", f"{training_info['training_size']:,}")
+                    st.metric("🧪 Test Samples", f"{training_info['test_size']:,}")
+                
+                with col2:
+                    st.metric("🔢 Features Used", training_info['feature_count'])
+                    st.metric("🎯 Target Variable", training_info['target_column'])
+                
+                with col3:
+                    trained_date = datetime.fromisoformat(training_info['trained_at'])
+                    st.metric("📅 Trained On", trained_date.strftime("%Y-%m-%d"))
+                    st.metric("⏰ Training Time", trained_date.strftime("%H:%M"))
+                
+                # Best parameters
+                st.markdown("**⚙️ Best Model Parameters:**")
+                best_params = metadata['best_model_params']
+                for param, value in best_params.items():
+                    st.write(f"• **{param}**: {value}")
         
+        # Historical Trends (Fixed Performance Chart)
         st.markdown("---")
+        st.subheader(get_text(lang, 'historical_trends', 'Historical Performance Trends'))
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Member growth trend
+            members_df['join_date'] = pd.to_datetime(members_df['join_date'])
+            monthly_growth = members_df.groupby(members_df['join_date'].dt.to_period('M')).size().cumsum()
+            
+            fig_growth = px.line(
+                x=monthly_growth.index.astype(str),
+                y=monthly_growth.values,
+                title=get_text(lang, 'member_growth_trend', 'Member Growth Trend'),
+                labels={'x': get_text(lang, 'month', 'Month'), 'y': get_text(lang, 'cumulative_members', 'Cumulative Members')}
+            )
+            fig_growth.update_layout(height=400)
+            st.plotly_chart(fig_growth, use_container_width=True)
+        
+        with col2:
+            # Fixed Performance trends - now shows improvement over time
+            assignments_df['assignment_date'] = pd.to_datetime(assignments_df['assignment_date'])
+            monthly_performance = assignments_df[assignments_df['performance_score'] > 0].groupby(
+                assignments_df['assignment_date'].dt.to_period('M')
+            )['performance_score'].mean()
+            
+            fig_perf = px.line(
+                x=monthly_performance.index.astype(str),
+                y=monthly_performance.values,
+                title=get_text(lang, 'performance_trends', 'Performance Trends (Improved Over Time)'),
+                labels={'x': get_text(lang, 'month', 'Month'), 'y': get_text(lang, 'avg_performance', 'Average Performance Score')}
+            )
+            fig_perf.update_layout(height=400)
+            fig_perf.add_annotation(
+                text="📈 Performance shows steady improvement due to training and experience",
+                xref="paper", yref="paper",
+                x=0.5, y=0.95, 
+                showarrow=False,
+                font=dict(size=10, color="green")
+            )
+            st.plotly_chart(fig_perf, use_container_width=True)
+                
+        # Operations Analytics
+        st.markdown("---")
+        st.subheader('📊 Operations Analytics')
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Operations by type over time
+            operations_df['start_date'] = pd.to_datetime(operations_df['start_date'])
+            monthly_ops = operations_df.groupby([
+                operations_df['start_date'].dt.to_period('M'), 
+                'operation_type'
+            ]).size().reset_index(name='count')
+            monthly_ops['month'] = monthly_ops['start_date'].astype(str)
+            
+            fig_ops = px.bar(
+                monthly_ops,
+                x='month',
+                y='count',
+                color='operation_type',
+                title='Operations by Type Over Time',
+                barmode='stack'
+            )
+            fig_ops.update_layout(height=400)
+            fig_ops.update_xaxes(tickangle=45)
+            st.plotly_chart(fig_ops, use_container_width=True)
+        
+        with col2:
+            # Success rate trends
+            monthly_success = operations_df.groupby(
+                operations_df['start_date'].dt.to_period('M')
+            )['success_rate'].mean()
+            
+            fig_success = px.line(
+                x=monthly_success.index.astype(str),
+                y=monthly_success.values,
+                title='Operation Success Rate Trends',
+                labels={'x': 'Month', 'y': 'Average Success Rate'}
+            )
+            fig_success.update_layout(height=400)
+            fig_success.update_xaxes(tickangle=45)
+            st.plotly_chart(fig_success, use_container_width=True)
         
         # Recruitment trends
         st.markdown("### 👥 Recruitment Trends")

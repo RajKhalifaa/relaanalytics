@@ -67,7 +67,8 @@ class DataPersistence:
             
             # Convert date columns back to datetime
             members_df['join_date'] = pd.to_datetime(members_df['join_date'])
-            operations_df['date'] = pd.to_datetime(operations_df['date'])
+            operations_df['start_date'] = pd.to_datetime(operations_df['start_date'])
+            operations_df['end_date'] = pd.to_datetime(operations_df['end_date'])
             assignments_df['assignment_date'] = pd.to_datetime(assignments_df['assignment_date'])
             
             return members_df, operations_df, assignments_df
