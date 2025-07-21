@@ -101,6 +101,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### July 21, 2025 - Data Persistence System
+- **Implemented Data Persistence**: Added comprehensive data persistence system to save/load generated datasets from CSV files
+- **Performance Optimization**: Eliminated need to regenerate 75K+ records every session, dramatically improving load times
+- **Data Management Controls**: Added "Generate New" and "Delete Data" buttons with metadata tracking
+- **Automatic Data Loading**: System automatically loads saved data on startup if available
+- **Bilingual Data Controls**: All data management interfaces support English/Bahasa Malaysia switching
+- **File Organization**: Created structured data directory with metadata tracking (generation date, record counts)
+- **Persistent State Management**: Data persists across sessions and browser refreshes for better user experience
+
 ### July 17, 2025 - Enhanced Data Realism
 - **Fixed Faker Locale Issue**: Resolved Malaysian locale configuration error by using supported English locale
 - **Authentic Malaysian Names**: Added comprehensive Malaysian name generation by ethnicity (Malay, Chinese, Indian)

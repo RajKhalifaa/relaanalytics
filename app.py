@@ -12,6 +12,7 @@ from data_generator import DataGenerator
 from dashboard import Dashboard
 from analytics import Analytics
 from translations import get_text, get_language_options
+from data_persistence import DataPersistence
 
 # Page configuration
 st.set_page_config(
@@ -123,9 +124,22 @@ def main():
     render_header(lang)
     
     # Initialize classes
-    data_gen = DataGenerator()
     dashboard = Dashboard(lang)  # Pass language to dashboard
     analytics = Analytics()
+    data_persistence = DataPersistence()
+    
+    # Check if data is already loaded in session state
+    if not st.session_state.data_generated:
+        # Try to load saved data first
+        if data_persistence.data_exists():
+            with st.spinner(get_text(lang, 'loading_saved_data', 'Loading saved data...')):
+                members_df, operations_df, assignments_df = data_persistence.load_data()
+                if members_df is not None:
+                    st.session_state.members_df = members_df
+                    st.session_state.operations_df = operations_df
+                    st.session_state.assignments_df = assignments_df
+                    st.session_state.data_generated = True
+                    st.rerun()
     
     # Continue with sidebar controls
     with st.sidebar:
@@ -133,30 +147,55 @@ def main():
         st.markdown("---")
         st.markdown(f"### {get_text(lang, 'data_controls')}")
         
-        # Generate data button
-        if st.button(get_text(lang, 'generate_data'), type="primary"):
-            with st.spinner(get_text(lang, 'generating_dataset')):
-                # Generate datasets (reduced size for faster loading)
-                members_df = data_gen.generate_members_data(50000)  # 50k members for demo
-                operations_df = data_gen.generate_operations_data(5000)  # 5k operations
-                assignments_df = data_gen.generate_assignments_data(members_df, 20000)  # 20k assignments
+        # Show data status and metadata
+        if data_persistence.data_exists():
+            metadata = data_persistence.get_metadata()
+            if metadata:
+                st.success(get_text(lang, 'data_ready'))
+                st.metric(get_text(lang, 'total_members'), f"{metadata['members_count']:,}")
+                st.metric(get_text(lang, 'total_operations'), f"{metadata['operations_count']:,}")
+                st.metric(get_text(lang, 'assignments'), f"{metadata['assignments_count']:,}")
                 
-                # Store in session state
-                st.session_state.members_df = members_df
-                st.session_state.operations_df = operations_df
-                st.session_state.assignments_df = assignments_df
-                st.session_state.data_generated = True
-                
-            st.success(get_text(lang, 'data_generated'))
-            st.rerun()
+                # Show when data was generated
+                gen_date = datetime.fromisoformat(metadata['generated_date']).strftime("%Y-%m-%d %H:%M")
+                st.caption(f"{get_text(lang, 'data_generated_on', 'Generated on')}: {gen_date}")
         
-        # Data status
-        if st.session_state.data_generated:
-            st.success(get_text(lang, 'data_ready'))
-            st.metric(get_text(lang, 'total_members'), f"{len(st.session_state.members_df):,}")
-            st.metric(get_text(lang, 'total_operations'), f"{len(st.session_state.operations_df):,}")
-            st.metric(get_text(lang, 'assignments'), f"{len(st.session_state.assignments_df):,}")
-        else:
+        # Data control buttons
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Generate new data button
+            if st.button(get_text(lang, 'generate_new', '🔄 Generate New'), type="primary"):
+                with st.spinner(get_text(lang, 'generating_dataset')):
+                    data_gen = DataGenerator()
+                    members_df, operations_df, assignments_df = data_persistence.generate_and_save_data(50000, 5000, 20000)
+                    
+                    if members_df is not None:
+                        # Store in session state
+                        st.session_state.members_df = members_df
+                        st.session_state.operations_df = operations_df
+                        st.session_state.assignments_df = assignments_df
+                        st.session_state.data_generated = True
+                        st.success(get_text(lang, 'data_generated'))
+                        st.rerun()
+                    else:
+                        st.error(get_text(lang, 'data_generation_failed', 'Failed to generate data'))
+        
+        with col2:
+            # Delete data button
+            if data_persistence.data_exists():
+                if st.button(get_text(lang, 'delete_data', '🗑️ Delete Data'), type="secondary"):
+                    data_persistence.delete_data()
+                    st.session_state.data_generated = False
+                    if 'members_df' in st.session_state:
+                        del st.session_state.members_df
+                        del st.session_state.operations_df
+                        del st.session_state.assignments_df
+                    st.success(get_text(lang, 'data_deleted', 'Data deleted successfully'))
+                    st.rerun()
+        
+        # Show message if no data exists
+        if not st.session_state.data_generated and not data_persistence.data_exists():
             st.warning(get_text(lang, 'click_generate'))
         
         st.markdown("---")

@@ -77,8 +77,17 @@ translations = {
         'activity_heatmap': '🕒 Operational Activity Heatmap',
         
         # Data Generation Messages
+        'generate_data': '🔄 Generate/Refresh Data',
+        'generate_new': '🔄 Generate New',
+        'delete_data': '🗑️ Delete Data',
+        'loading_saved_data': 'Loading saved data...',
         'generating_dataset': 'Generating comprehensive RELA dataset...',
         'data_generated': '✅ Data generated successfully!',
+        'data_generation_failed': '❌ Failed to generate data',
+        'data_deleted': '✅ Data deleted successfully',
+        'data_generated_on': 'Generated on',
+        'data_ready': '✅ Data Ready',
+        'click_generate': '⚠️ Click \'Generate Data\' to start',
         
         # Common Labels
         'members': 'Members',
@@ -108,6 +117,14 @@ translations = {
         # Data Controls
         'data_controls': 'Kawalan Data',
         'generate_data': '🔄 Jana/Kemaskini Data',
+        'generate_new': '🔄 Jana Baru',
+        'delete_data': '🗑️ Padam Data',
+        'loading_saved_data': 'Memuatkan data yang disimpan...',
+        'generating_dataset': 'Menjana set data RELA yang komprehensif...',
+        'data_generated': '✅ Data berjaya dijana!',
+        'data_generation_failed': '❌ Gagal menjana data',
+        'data_deleted': '✅ Data berjaya dipadam',
+        'data_generated_on': 'Dijana pada',
         'data_ready': '✅ Data Sedia',
         'click_generate': '⚠️ Klik \'Jana Data\' untuk mula',
         'quick_filters': 'Penapis Pantas',
