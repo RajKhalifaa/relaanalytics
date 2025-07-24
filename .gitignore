@@ -111,3 +111,29 @@ dmypy.json
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Development and build artifacts
+*.bat
+*.sh
+*_fixed.py
+*_old.py
+regenerate_*.py
+
+# Documentation drafts
+*_SUMMARY.md
+*_QUICKSTART.md
+*-workflow.md
+*-guide.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary cleanup file
+PROJECT_CLEANUP_PLAN.md

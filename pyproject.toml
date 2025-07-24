@@ -1,8 +1,22 @@
 [project]
-name = "repl-nix-workspace"
-version = "0.1.0"
-description = "Add your description here"
+name = "rela-analytics-dashboard"
+version = "1.0.0"
+description = "RELA Malaysia Analytics Dashboard - A comprehensive bilingual analytics dashboard for Malaysian People's Volunteer Corps"
+readme = "README.md"
+authors = [
+    {name = "RELA Malaysia", email = "admin@rela.gov.my"}
+]
+license = {text = "MIT"}
 requires-python = ">=3.11"
+keywords = ["analytics", "dashboard", "malaysia", "rela", "streamlit"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Government",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
 dependencies = [
     "faker>=37.4.2",
     "joblib>=1.5.1",
@@ -13,3 +27,20 @@ dependencies = [
     "statsmodels>=0.14.5",
     "streamlit>=1.47.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/rela-analytics-dashboard"
+Repository = "https://github.com/yourusername/rela-analytics-dashboard.git"
+Issues = "https://github.com/yourusername/rela-analytics-dashboard/issues"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88

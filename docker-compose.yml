@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  rela-analytics:
+    image: xxxraj/rela-analytics:latest
+    container_name: rela-analytics-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Add a reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: rela-analytics-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - rela-analytics
+    restart: unless-stopped
