@@ -1,16 +1,25 @@
 """
 RELA Analytics Floating Chatbot
-Real-time AI assistant with OpenAI integration
+Modern floating AI assistant with OpenAI integration
 """
 
 import streamlit as st
 import pandas as pd
-import openai
-import json
-import time
+
+try:
+    from openai import OpenAI
+except ImportError:
+    st.error(
+        "OpenAI package not found. Please install with: pip install openai>=1.55.0"
+    )
+    st.stop()
 import os
+from dotenv import load_dotenv
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+
+# Load environment variables
+load_dotenv()
 
 from ..utils.translations import get_text
 
@@ -28,7 +37,7 @@ class FloatingChatbot:
             return
 
         # Initialize OpenAI client
-        openai.api_key = self.api_key
+        self.client = OpenAI(api_key=self.api_key)
 
         # Initialize session state for chat
         if "chat_history" not in st.session_state:
@@ -38,54 +47,31 @@ class FloatingChatbot:
         if "current_page_context" not in st.session_state:
             st.session_state.current_page_context = ""
 
-    def set_page_context(self, page_name: str, data_summary: str = ""):
-        """Set context about the current page for better AI responses"""
-        st.session_state.current_page_context = (
-            f"Current page: {page_name}. {data_summary}"
-        )
-
-    def get_dashboard_context(
-        self,
-        members_df: pd.DataFrame,
-        operations_df: pd.DataFrame,
-        assignments_df: pd.DataFrame,
-    ) -> str:
-        """Generate context about the dashboard data for AI"""
-        context = f"""
-        RELA Malaysia Analytics Dashboard Context:
-        
-        Current Data Summary:
-        - Total Members: {len(members_df):,}
-        - Total Operations: {len(operations_df):,}
-        - Total Assignments: {len(assignments_df):,}
-        
-        Member Statistics:
-        - Active Members: {len(members_df[members_df['status'] == 'Active']):,}
-        - Age Range: {members_df['age'].min()}-{members_df['age'].max()} years
-        - States Covered: {members_df['state'].nunique()} states
-        - Top States: {', '.join(members_df['state'].value_counts().head(3).index.tolist())}
-        
-        Operations Overview:
-        - Operation Types: {', '.join(operations_df['operation_type'].unique())}
-        - Success Rate: {(operations_df['status'] == 'Completed').mean():.1%}
-        - Date Range: {operations_df['date'].min()} to {operations_df['date'].max()}
-        
-        Performance Metrics:
-        - Average Performance Score: {members_df['performance_score'].mean():.1f}/100
-        - Attendance Rate: {assignments_df['attendance'].mean():.1%}
-        
-        Page Context: {st.session_state.current_page_context}
-        
-        Please provide helpful insights based on this RELA Malaysia dashboard data.
-        You can answer questions about members, operations, performance, demographics, trends, and analytics.
-        """
-        return context
-
-    def call_openai_api(self, user_message: str, context: str) -> str:
-        """Call OpenAI API with context and user message"""
+    def get_ai_response(self, user_message: str, context: str) -> str:
+        """Get AI response using OpenAI API"""
         try:
+            # Language-specific instructions
+            language_instructions = {
+                "en": {
+                    "greeting": "You are a helpful AI assistant for RELA Malaysia Analytics Dashboard.",
+                    "response_language": "Respond in English",
+                    "fallback": "I apologize, but I'm experiencing technical difficulties. Please try again later.",
+                },
+                "ms": {
+                    "greeting": "Anda adalah pembantu AI yang berguna untuk Papan Pemuka Analitik RELA Malaysia.",
+                    "response_language": "Respond in Bahasa Malaysia (Malay language)",
+                    "fallback": "Maaf, saya mengalami kesulitan teknikal. Sila cuba lagi nanti.",
+                },
+            }
+
+            lang_config = language_instructions.get(
+                self.language, language_instructions["en"]
+            )
+
             system_prompt = f"""
-            You are RELA Analytics Assistant, an AI helper for the Malaysian People's Volunteer Corps (RELA) analytics dashboard.
+            {lang_config["greeting"]}
+            
+            IMPORTANT: {lang_config["response_language"]}. All responses must be in the same language as this instruction.
             
             Context about the current dashboard:
             {context}
@@ -97,24 +83,33 @@ class FloatingChatbot:
             - Be professional and supportive
             - If asked about trends, mention specific data points
             - For complex queries, break down the analysis
-            - Support both English and Bahasa Malaysia responses when appropriate
-            - Keep responses under 300 words for better readability
+            - Keep responses under 250 words for better readability
+            - Always respond in the language specified above
+            
+            If responding in Bahasa Malaysia:
+            - Use proper Malay terminology for RELA operations
+            - "Members" = "Ahli", "Operations" = "Operasi", "Performance" = "Prestasi"
+            - "States" = "Negeri", "Active" = "Aktif", "Total" = "Jumlah"
+            - "Analytics" = "Analitik", "Dashboard" = "Papan Pemuka"
             """
 
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message},
                 ],
-                max_tokens=400,
+                max_tokens=350,
                 temperature=0.7,
             )
 
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            return f"I apologize, but I'm experiencing technical difficulties. Please try again later. Error: {str(e)}"
+            lang_config = language_instructions.get(
+                self.language, language_instructions["en"]
+            )
+            return f"{lang_config['fallback']} Error: {str(e)}"
 
     def render_floating_chatbot(
         self,
@@ -122,237 +117,223 @@ class FloatingChatbot:
         operations_df: pd.DataFrame,
         assignments_df: pd.DataFrame,
     ):
-        """Render the floating chatbot interface using Streamlit components"""
+        """Render modern floating chatbot interface with icon toggle"""
 
-        # Add floating chatbot CSS
-        st.markdown(
-            """
-        <style>
-        .floating-chat-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #1f4e79, #2d5aa0);
-            color: white;
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .floating-chat-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-        }
-        
-        .chat-container {
-            position: fixed;
-            bottom: 90px;
-            left: 20px;
-            width: 350px;
-            max-height: 500px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-            border: 1px solid #e0e0e0;
-            z-index: 999;
-            overflow: hidden;
-        }
-        
-        .chat-header {
-            background: linear-gradient(135deg, #1f4e79, #2d5aa0);
-            color: white;
-            padding: 15px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .chat-messages {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 15px;
-            background: #f8f9fa;
-        }
-        
-        .user-msg {
-            background: #e3f2fd;
-            padding: 8px 12px;
-            border-radius: 12px;
-            margin: 5px 0;
-            margin-left: 20%;
-            text-align: right;
-        }
-        
-        .bot-msg {
-            background: white;
-            padding: 8px 12px;
-            border-radius: 12px;
-            margin: 5px 0;
-            margin-right: 20%;
-            border: 1px solid #e0e0e0;
-        }
-        
-        .chat-input {
-            padding: 15px;
-            border-top: 1px solid #e0e0e0;
-            background: white;
-        }
-        
-        /* Hide default streamlit elements in chat */
-        .chat-container .stTextInput > div > div > input {
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 8px 12px;
-        }
-        
-        .chat-container .stButton > button {
-            background: #1f4e79;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 6px 15px;
-            font-size: 12px;
-        }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
+        # Only render if we have valid API key
+        if not self.api_key:
+            return
 
-        # Chat toggle button (always visible)
-        if st.button("🤖", key="chat_toggle", help="Open RELA Analytics Assistant"):
-            st.session_state.chat_open = not st.session_state.chat_open
-            st.rerun()
+        # Chat toggle positioned at bottom-right
+        with st.container():
+            # Create columns to position the button at the right
+            col1, col2, col3 = st.columns([8, 1, 1])
+
+            with col3:
+                if st.button(
+                    "💬",
+                    key="chat_toggle",
+                    help="Chat with RELA Assistant",
+                    use_container_width=True,
+                ):
+                    st.session_state.chat_open = not st.session_state.chat_open
+                    st.rerun()
 
         # Render chat window if open
         if st.session_state.chat_open:
-            with st.container():
-                # Create chat window with custom styling
-                st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+            # Create a sidebar-like container for the chat
+            with st.expander("🤖 RELA Analytics Assistant", expanded=True):
+                # Welcome message
+                st.markdown(
+                    """
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: white;">👋 Hi! I'm your RELA Analytics Assistant</h4>
+                        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Ask me anything about the dashboard data!</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-                # Chat header
-                col1, col2 = st.columns([4, 1])
+                # Quick action buttons
+                st.markdown("**Quick Questions:**")
+
+                col1, col2 = st.columns(2)
                 with col1:
-                    st.markdown("**🤖 RELA Analytics Assistant**")
-                with col2:
-                    if st.button("✕", key="close_chat", help="Close"):
-                        st.session_state.chat_open = False
-                        st.rerun()
+                    if st.button(
+                        "📊 Key Metrics", key="quick_metrics", use_container_width=True
+                    ):
+                        self._process_quick_question(
+                            "Show me the key metrics and statistics",
+                            members_df,
+                            operations_df,
+                            assignments_df,
+                        )
 
-                # Chat messages area
+                with col2:
+                    if st.button(
+                        "🗺️ Top States", key="quick_states", use_container_width=True
+                    ):
+                        self._process_quick_question(
+                            "Which states have the most RELA members?",
+                            members_df,
+                            operations_df,
+                            assignments_df,
+                        )
+
+                # Chat messages display
                 if st.session_state.chat_history:
-                    for i, message in enumerate(
-                        st.session_state.chat_history[-6:]
-                    ):  # Show last 6 messages
+                    st.markdown("---")
+                    st.markdown("**Conversation:**")
+
+                    # Display last 6 messages to avoid clutter
+                    for message in st.session_state.chat_history[-6:]:
                         if message["role"] == "user":
                             st.markdown(
-                                f'<div class="user-msg">{message["content"]}</div>',
+                                f"""
+                                <div style="text-align: right; margin: 10px 0;">
+                                    <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                                color: white; padding: 10px 15px; border-radius: 15px 15px 5px 15px; 
+                                                max-width: 80%; font-size: 14px;">
+                                        <strong>You:</strong> {message["content"]}
+                                    </div>
+                                </div>
+                                """,
                                 unsafe_allow_html=True,
                             )
                         else:
                             st.markdown(
-                                f'<div class="bot-msg">{message["content"]}</div>',
+                                f"""
+                                <div style="margin: 10px 0;">
+                                    <div style="display: inline-block; background: #f8f9fa; color: #495057; 
+                                                border: 1px solid #e9ecef; padding: 10px 15px; 
+                                                border-radius: 15px 15px 15px 5px; max-width: 90%; font-size: 14px;">
+                                        <strong>🤖 Assistant:</strong> {message["content"]}
+                                    </div>
+                                </div>
+                                """,
                                 unsafe_allow_html=True,
                             )
-                else:
-                    st.info(
-                        "👋 Hi! I'm your RELA Analytics Assistant. Ask me anything about the dashboard data!"
-                    )
 
                 # Chat input
-                col1, col2 = st.columns([4, 1])
-                with col1:
+                st.markdown("---")
+
+                # Create input form
+                with st.form("chat_form", clear_on_submit=True):
                     user_input = st.text_input(
-                        "",
-                        placeholder="Ask about RELA data...",
-                        key="chat_input",
+                        "Ask about RELA data:",
+                        placeholder="e.g., How many active members are there?",
                         label_visibility="collapsed",
                     )
-                with col2:
-                    send_pressed = st.button("Send", key="send_msg")
 
-                # Handle user input
-                if send_pressed and user_input.strip():
-                    # Add user message
-                    st.session_state.chat_history.append(
-                        {"role": "user", "content": user_input}
-                    )
+                    col1, col2, col3 = st.columns([2, 1, 1])
 
-                    # Get AI response
-                    with st.spinner("🤔 Thinking..."):
-                        context = self.get_dashboard_context(
-                            members_df, operations_df, assignments_df
+                    with col1:
+                        submit_button = st.form_submit_button(
+                            "Send 📤", use_container_width=True
                         )
-                        ai_response = self.call_openai_api(user_input, context)
 
-                    # Add AI response
-                    st.session_state.chat_history.append(
-                        {"role": "assistant", "content": ai_response}
+                    with col2:
+                        if st.form_submit_button("Clear 🗑️", use_container_width=True):
+                            st.session_state.chat_history = []
+                            st.rerun()
+
+                    with col3:
+                        if st.form_submit_button("Close ❌", use_container_width=True):
+                            st.session_state.chat_open = False
+                            st.rerun()
+
+                # Process chat message
+                if submit_button and user_input.strip():
+                    self._process_chat_message(
+                        user_input.strip(), members_df, operations_df, assignments_df
                     )
-
-                    # Clear input and refresh
                     st.rerun()
 
-                # Add some suggested questions
-                st.markdown("**Quick questions:**")
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("📊 Show key metrics", key="q1"):
-                        st.session_state.chat_history.append(
-                            {
-                                "role": "user",
-                                "content": "Show me the key performance metrics",
-                            }
-                        )
-                        context = self.get_dashboard_context(
-                            members_df, operations_df, assignments_df
-                        )
-                        response = self.call_openai_api(
-                            "Show me the key performance metrics", context
-                        )
-                        st.session_state.chat_history.append(
-                            {"role": "assistant", "content": response}
-                        )
-                        st.rerun()
-                with col2:
-                    if st.button("🏢 Top states", key="q2"):
-                        st.session_state.chat_history.append(
-                            {
-                                "role": "user",
-                                "content": "Which states have the most RELA members?",
-                            }
-                        )
-                        context = self.get_dashboard_context(
-                            members_df, operations_df, assignments_df
-                        )
-                        response = self.call_openai_api(
-                            "Which states have the most RELA members?", context
-                        )
-                        st.session_state.chat_history.append(
-                            {"role": "assistant", "content": response}
-                        )
-                        st.rerun()
+    def _process_quick_question(
+        self,
+        question: str,
+        members_df: pd.DataFrame,
+        operations_df: pd.DataFrame,
+        assignments_df: pd.DataFrame,
+    ):
+        """Process a quick question button click"""
+        self._process_chat_message(question, members_df, operations_df, assignments_df)
+        st.rerun()
 
-                st.markdown("</div>", unsafe_allow_html=True)
+    def _process_chat_message(
+        self,
+        user_input: str,
+        members_df: pd.DataFrame,
+        operations_df: pd.DataFrame,
+        assignments_df: pd.DataFrame,
+    ):
+        """Process and respond to chat message"""
+        # Add user message to history
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-        # Add floating button styling
-        if not st.session_state.chat_open:
-            st.markdown(
-                """
-            <div class="floating-chat-btn" onclick="document.querySelector('[data-testid=stButton] button').click()">
-                🤖
-            </div>
-            """,
-                unsafe_allow_html=True,
+        # Generate context from data
+        context = self._generate_context(members_df, operations_df, assignments_df)
+
+        # Get AI response
+        bot_response = self.get_ai_response(user_input, context)
+
+        # Add bot response to history
+        st.session_state.chat_history.append(
+            {"role": "assistant", "content": bot_response}
+        )
+
+    def _generate_context(
+        self,
+        members_df: pd.DataFrame,
+        operations_df: pd.DataFrame,
+        assignments_df: pd.DataFrame,
+    ) -> str:
+        """Generate context from current data"""
+        try:
+            total_members = len(members_df) if not members_df.empty else 0
+            active_members = (
+                len(members_df[members_df["status"] == "Active"])
+                if not members_df.empty
+                else 0
             )
+            total_operations = len(operations_df) if not operations_df.empty else 0
+            total_states = members_df["state"].nunique() if not members_df.empty else 0
+
+            top_state = (
+                members_df["state"].value_counts().index[0]
+                if not members_df.empty
+                else "N/A"
+            )
+            top_state_count = (
+                members_df["state"].value_counts().iloc[0]
+                if not members_df.empty
+                else 0
+            )
+
+            context = f"""
+            Current RELA Malaysia Analytics Dashboard Data Summary:
+            - Total Members: {total_members:,}
+            - Active Members: {active_members:,}
+            - Inactive Members: {total_members - active_members:,}
+            - Total Operations: {total_operations:,}
+            - States Covered: {total_states}
+            - Top State by Members: {top_state} ({top_state_count:,} members)
+            
+            Current page context: {st.session_state.get('current_page_context', 'Dashboard overview')}
+            """
+
+            return context
+
+        except Exception as e:
+            return f"Dashboard data available but unable to generate detailed context. Error: {str(e)}"
+
+    def update_language(self, language: str):
+        """Update the chatbot language"""
+        self.language = language
+
+    def set_page_context(self, page: str, context: str):
+        """Set context for the current page"""
+        st.session_state.current_page_context = f"Page: {page} - {context}"
 
     def clear_chat_history(self):
         """Clear the chat history"""

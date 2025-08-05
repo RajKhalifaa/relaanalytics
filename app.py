@@ -17,7 +17,7 @@ import json
 from src.utils.data_generator import DataGenerator
 from src.core.dashboard import Dashboard
 from src.core.analytics import Analytics
-from src.core.simple_chatbot import SimpleChatbot
+from src.core.floating_chatbot import FloatingChatbot
 from src.utils.translations import get_text, get_language_options
 from src.utils.data_persistence import DataPersistence
 
@@ -84,6 +84,7 @@ if "language" not in st.session_state:
 
 def render_header(lang):
     """Render the main header with RELA logo and language support"""
+    import base64
 
     # Create header with logo and title
     col1, col2, col3 = st.columns([1, 3, 1])
@@ -96,12 +97,32 @@ def render_header(lang):
             st.write("🇲🇾")  # Fallback if logo not found
 
     with col2:
+        # Try to load and encode the background image
+        try:
+            with open("assets/rela_background.jpg", "rb") as img_file:
+                img_base64 = base64.b64encode(img_file.read()).decode()
+            background_style = f"background: linear-gradient(rgba(31, 78, 121, 0.85), rgba(45, 90, 160, 0.85)), url(data:image/jpeg;base64,{img_base64});"
+        except:
+            # Fallback gradient background if image not found
+            background_style = (
+                "background: linear-gradient(135deg, #1f4e79 0%, #2d5aa0 100%);"
+            )
+
+        # Header with background image
         st.markdown(
             f"""
-        <div style="text-align: center; padding: 10px;">
-            <h1 style="color: #1f4e79; margin: 0; font-size: 2.5rem;">RELA MALAYSIA</h1>
-            <h3 style="color: #2d5aa0; margin: 5px 0; font-size: 1.3rem;">Analytics Dashboard</h3>
-            <p style="color: #666; margin: 5px 0; font-size: 1rem;">Powered by <strong>Credence AI & Analytics</strong></p>
+        <div style="position: relative; text-align: center; padding: 25px; border-radius: 15px;
+                    {background_style}
+                    background-size: cover; background-position: center; color: white;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                    border: 2px solid rgba(255,255,255,0.1);">
+            <h1 style="color: white; margin: 0; font-size: 3rem; text-shadow: 2px 2px 6px rgba(0,0,0,0.7); 
+                       font-weight: bold; letter-spacing: 2px;">RELA MALAYSIA</h1>
+            <h3 style="color: #e8f4fd; margin: 10px 0; font-size: 1.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+                       font-weight: 500;">Analytics Dashboard</h3>
+            <p style="color: #d1e7ff; margin: 8px 0; font-size: 1.1rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+                      background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; display: inline-block;">
+                Powered by <strong>Credence AI & Analytics</strong></p>
         </div>
         """,
             unsafe_allow_html=True,
@@ -110,12 +131,14 @@ def render_header(lang):
     with col3:
         # Language selector in the header
         pass
-    # Main header with RELA branding
+
+    # Sub-header with additional styling
     st.markdown(
         """
     <div style="background: linear-gradient(90deg, #1f4e79 0%, #2d5aa0 100%); 
-                padding: 1rem; border-radius: 10px; margin-bottom: 2rem;">
-        <p style="color: #e8f4fd; text-align: center; margin: 0; font-size: 1.1rem;">
+                padding: 12px; border-radius: 10px; margin: 15px 0; 
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <p style="color: #e8f4fd; text-align: center; margin: 0; font-size: 1.1rem; font-weight: 500;">
             Comprehensive Member Management & Operations Analytics
         </p>
     </div>
@@ -167,7 +190,7 @@ def main():
     # Initialize classes
     dashboard = Dashboard(lang)  # Pass language to dashboard
     analytics = Analytics()
-    ai_chatbot = SimpleChatbot(lang)  # Initialize AI chatbot with language
+    ai_chatbot = FloatingChatbot(lang)  # Initialize AI floating chatbot with language
     ai_chatbot.update_language(lang)  # Update language dynamically
     data_persistence = DataPersistence()
 
@@ -371,7 +394,7 @@ def main():
         ai_chatbot.set_page_context(
             page, f"Currently viewing {page} with {len(filtered_data[0])} members"
         )
-        ai_chatbot.render_floating_icon_chatbot(
+        ai_chatbot.render_floating_chatbot(
             filtered_data[0], filtered_data[1], filtered_data[2]
         )
 

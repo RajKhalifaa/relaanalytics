@@ -42,26 +42,74 @@ class Dashboard:
         members_df, operations_df, assignments_df = data
         lang = self.language
 
-        # KPI metrics
+        # KPI metrics with enhanced styling
+        st.markdown(
+            """
+            <style>
+            .metric-container {
+                background: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                border-left: 4px solid #1f4e79;
+                margin: 10px 5px;
+                transition: transform 0.2s ease;
+            }
+            .metric-container:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            .metric-value {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #1f4e79;
+                margin: 8px 0;
+            }
+            .metric-label {
+                font-size: 1rem;
+                color: #666;
+                margin-bottom: 5px;
+                font-weight: 600;
+            }
+            .metric-delta {
+                font-size: 0.9rem;
+                color: #28a745;
+                font-weight: 500;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             total_members = len(members_df)
             active_members = len(members_df[members_df["status"] == "Active"])
-            st.metric(
-                get_text(lang, "total_members", "👥 Total Members"),
-                f"{total_members:,}",
-                f"{active_members:,} {get_text(lang, 'active', 'Active')}",
+            st.markdown(
+                f"""
+                <div class="metric-container">
+                    <div class="metric-label">👥 {get_text(lang, "total_members", "Total Members")}</div>
+                    <div class="metric-value">{total_members:,}</div>
+                    <div class="metric-delta">↗ {active_members:,} {get_text(lang, 'active', 'Active')}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         with col2:
             total_ops = len(operations_df)
             completed_ops = len(operations_df[operations_df["status"] == "Completed"])
             completion_rate = (completed_ops / total_ops * 100) if total_ops > 0 else 0
-            st.metric(
-                get_text(lang, "total_operations", "🚨 Total Operations"),
-                f"{total_ops:,}",
-                f"{completion_rate:.1f}% {get_text(lang, 'complete', 'Complete')}",
+            st.markdown(
+                f"""
+                <div class="metric-container">
+                    <div class="metric-label">🚨 {get_text(lang, "total_operations", "Total Operations")}</div>
+                    <div class="metric-value">{total_ops:,}</div>
+                    <div class="metric-delta">✅ {completion_rate:.1f}% {get_text(lang, 'complete', 'Complete')}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         with col3:
@@ -70,26 +118,41 @@ class Dashboard:
             attendance_rate = (
                 (attended / total_assignments * 100) if total_assignments > 0 else 0
             )
-            st.metric(
-                get_text(lang, "assignments", "📋 Assignments"),
-                f"{total_assignments:,}",
-                f"{attendance_rate:.1f}% {get_text(lang, 'attendance', 'Attendance')}",
+            st.markdown(
+                f"""
+                <div class="metric-container">
+                    <div class="metric-label">📋 {get_text(lang, "assignments", "Assignments")}</div>
+                    <div class="metric-value">{total_assignments:,}</div>
+                    <div class="metric-delta">📊 {attendance_rate:.1f}% {get_text(lang, 'attendance', 'Attendance')}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         with col4:
             avg_performance = assignments_df["performance_score"].mean()
-            st.metric(
-                get_text(lang, "avg_performance", "⭐ Avg Performance"),
-                f"{avg_performance:.1f}/10",
-                get_text(lang, "excellent", "Excellent"),
+            st.markdown(
+                f"""
+                <div class="metric-container">
+                    <div class="metric-label">⭐ {get_text(lang, "avg_performance", "Avg Performance")}</div>
+                    <div class="metric-value">{avg_performance:.1f}/10</div>
+                    <div class="metric-delta">🏆 {get_text(lang, "excellent", "Excellent")}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         with col5:
             states_covered = members_df["state"].nunique()
-            st.metric(
-                get_text(lang, "states_territories_metric", "🏛️ States/Territories"),
-                f"{states_covered}/16",
-                get_text(lang, "full_coverage", "Full Coverage"),
+            st.markdown(
+                f"""
+                <div class="metric-container">
+                    <div class="metric-label">🏛️ {get_text(lang, "states_territories_metric", "States/Territories")}</div>
+                    <div class="metric-value">{states_covered}/16</div>
+                    <div class="metric-delta">🌍 {get_text(lang, "full_coverage", "Full Coverage")}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         st.markdown("---")

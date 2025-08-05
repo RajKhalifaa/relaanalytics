@@ -5,10 +5,21 @@ Real-time AI assistant with OpenAI integration - Sidebar implementation
 
 import streamlit as st
 import pandas as pd
-from openai import OpenAI
+
+try:
+    from openai import OpenAI
+except ImportError:
+    st.error(
+        "OpenAI package not found. Please install with: pip install openai>=1.55.0"
+    )
+    st.stop()
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from ..utils.translations import get_text
 
