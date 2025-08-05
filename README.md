@@ -8,6 +8,7 @@ A comprehensive bilingual analytics dashboard for the Malaysian People's Volunte
 
 - **📊 Real-time Analytics**: Live operational insights and KPIs
 - **🤖 Machine Learning**: Predictive analytics for performance forecasting
+- **💬 AI Chatbot**: Natural language query interface for instant insights
 - **🌐 Bilingual Support**: Complete English/Bahasa Malaysia interface
 - **📈 Forecasting**: 3-24 month operational predictions
 - **🗺️ Geographic Intelligence**: State and district-level analysis
@@ -27,23 +28,33 @@ A comprehensive bilingual analytics dashboard for the Malaysian People's Volunte
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/yourusername/RelaAnalytics.git
-   cd RelaAnalytics
+   git clone https://github.com/RajKhalifaa/relaanalytics.git
+   cd relaanalytics
    ```
 
-2. **Install dependencies**:
+2. **Set up environment variables**:
+
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+
+   # Edit .env and add your OpenAI API key
+   # OPENAI_API_KEY=your_actual_openai_api_key_here
+   ```
+
+3. **Install dependencies**:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run the application**:
+4. **Run the application**:
 
    ```bash
    streamlit run app.py
    ```
 
-4. **Access the dashboard**:
+5. **Access the dashboard**:
    Open your browser and navigate to `http://localhost:8501`
 
 ### Docker Deployment
@@ -80,6 +91,8 @@ RelaAnalytics/
 ├── Dockerfile                      # Container configuration
 ├── docker-compose.yml             # Docker orchestration
 ├── README.md                       # Project documentation
+├── CHATBOT_DOCUMENTATION.md        # Chatbot feature documentation
+├── test_chatbot.py                 # Chatbot test suite
 ├── .gitignore                      # Git ignore rules
 ├── assets/                         # Static assets
 │   └── rela_logo.jpg
@@ -89,6 +102,7 @@ RelaAnalytics/
 ├── src/                           # Source code
 │   ├── core/                      # Core application modules
 │   │   ├── analytics.py           # Analytics engine
+│   │   ├── chatbot.py             # AI-powered chatbot interface
 │   │   ├── dashboard.py           # Dashboard components
 │   │   ├── forecasting_engine.py  # ML forecasting
 │   │   ├── ml_model_manager.py    # Model management
@@ -123,6 +137,7 @@ RelaAnalytics/
 - **Predictive Analytics**: ML-powered forecasting and predictions
 - **Regional Intelligence**: Geographic insights across Malaysian states
 - **Reporting System**: Comprehensive analytics with export capabilities
+- **🤖 Analytics Chatbot**: Natural language query interface with AI insights
 
 ### AI/ML Capabilities
 
@@ -130,6 +145,7 @@ RelaAnalytics/
 - **Time Series Forecasting**: 3-24 month operational predictions
 - **Risk Assessment**: Early intervention identification
 - **Resource Optimization**: Data-driven allocation recommendations
+- **Conversational AI**: Natural language processing for dashboard queries
 
 ## 🌍 Bilingual Support
 

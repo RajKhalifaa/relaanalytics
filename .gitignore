@@ -7,6 +7,8 @@ data/
 models/
 *.pkl
 *.joblib
+*.h5
+*.model
 
 # Python cache
 __pycache__/
@@ -87,6 +89,9 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.local
+.env.development
+.env.production
 .venv
 env/
 venv/
@@ -118,12 +123,20 @@ dmypy.json
 *_fixed.py
 *_old.py
 regenerate_*.py
+test_*.py
 
-# Documentation drafts
+# Documentation drafts and logs
 *_SUMMARY.md
 *_QUICKSTART.md
 *-workflow.md
 *-guide.md
+*_COMPLETE.md
+*_LOG.md
+*_DOCUMENTATION.md
+*_ENHANCEMENT*.md
+CLEANUP_*.md
+DEPLOYMENT_*.md
+CHATBOT_*.md
 
 # IDE and editor files
 .vscode/

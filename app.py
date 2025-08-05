@@ -17,6 +17,7 @@ import json
 from src.utils.data_generator import DataGenerator
 from src.core.dashboard import Dashboard
 from src.core.analytics import Analytics
+from src.core.simple_chatbot import SimpleChatbot
 from src.utils.translations import get_text, get_language_options
 from src.utils.data_persistence import DataPersistence
 
@@ -166,6 +167,8 @@ def main():
     # Initialize classes
     dashboard = Dashboard(lang)  # Pass language to dashboard
     analytics = Analytics()
+    ai_chatbot = SimpleChatbot(lang)  # Initialize AI chatbot with language
+    ai_chatbot.update_language(lang)  # Update language dynamically
     data_persistence = DataPersistence()
 
     # Check if data is already loaded in session state
@@ -361,6 +364,16 @@ def main():
         dashboard.show_trends(filtered_data)
     elif page == get_text(lang, "reports"):
         dashboard.show_reports(filtered_data)
+
+    # Render AI chatbot on all pages
+    if st.session_state.data_generated:
+        # Set context for current page
+        ai_chatbot.set_page_context(
+            page, f"Currently viewing {page} with {len(filtered_data[0])} members"
+        )
+        ai_chatbot.render_floating_icon_chatbot(
+            filtered_data[0], filtered_data[1], filtered_data[2]
+        )
 
 
 if __name__ == "__main__":
