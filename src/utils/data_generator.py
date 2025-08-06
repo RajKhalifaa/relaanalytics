@@ -272,7 +272,22 @@ class DataGenerator:
                 k=1,
             )[0]
 
-            join_date = self.fake.date_between(start_date="-20y", end_date="today")
+            # Generate more realistic join dates with growth patterns
+            # Simulate organizational growth: more recent hires, expansion periods
+            current_year = datetime.now().year
+
+            # Create weighted periods for more realistic growth
+            if i < num_members * 0.15:  # 15% - founding members (8-10 years ago)
+                join_date = self.fake.date_between(start_date="-10y", end_date="-8y")
+            elif i < num_members * 0.35:  # 20% - early growth (6-8 years ago)
+                join_date = self.fake.date_between(start_date="-8y", end_date="-6y")
+            elif i < num_members * 0.55:  # 20% - steady period (4-6 years ago)
+                join_date = self.fake.date_between(start_date="-6y", end_date="-4y")
+            elif i < num_members * 0.75:  # 20% - expansion (2-4 years ago)
+                join_date = self.fake.date_between(start_date="-4y", end_date="-2y")
+            else:  # 25% - recent growth (0-2 years ago)
+                join_date = self.fake.date_between(start_date="-2y", end_date="today")
+
             years_service = (datetime.now().date() - join_date).days / 365.25
 
             status = random.choices(

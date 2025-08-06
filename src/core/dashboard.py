@@ -1275,7 +1275,7 @@ class Dashboard:
         col1, col2 = st.columns(2)
 
         with col1:
-            # Member growth trend - fix data handling
+            # Member growth trend - improved realistic visualization
             try:
                 members_df["join_date"] = pd.to_datetime(
                     members_df["join_date"], errors="coerce"
@@ -1283,33 +1283,221 @@ class Dashboard:
                 # Remove NaN dates
                 clean_members = members_df.dropna(subset=["join_date"])
                 if len(clean_members) > 0:
-                    monthly_growth = (
-                        clean_members.groupby(
-                            clean_members["join_date"].dt.to_period("M")
-                        )
-                        .size()
-                        .cumsum()
+                    # Get date range from actual data
+                    min_date = clean_members["join_date"].min()
+                    max_date = clean_members["join_date"].max()
+
+                    # Create quarterly growth data for more meaningful trends
+                    clean_members["join_quarter"] = clean_members[
+                        "join_date"
+                    ].dt.to_period("Q")
+                    quarterly_joins = clean_members.groupby("join_quarter").size()
+
+                    # Calculate cumulative and new member data
+                    cumulative_growth = quarterly_joins.cumsum()
+
+                    # Convert period to datetime for better chart display
+                    growth_data = pd.DataFrame(
+                        {
+                            "Quarter": cumulative_growth.index.to_timestamp(),
+                            "Cumulative_Members": cumulative_growth.values,
+                            "New_Members": quarterly_joins.values,
+                        }
                     )
 
-                    fig_growth = px.line(
-                        x=monthly_growth.index.astype(str),
-                        y=monthly_growth.values,
-                        title=get_text(
-                            lang, "member_growth_trend", "Member Growth Trend"
-                        ),
-                        labels={
-                            "x": get_text(lang, "month", "Month"),
-                            "y": get_text(
-                                lang, "cumulative_members", "Cumulative Members"
+                    # Create dual-axis chart
+                    fig_growth = go.Figure()
+
+                    # Cumulative line (primary axis)
+                    fig_growth.add_trace(
+                        go.Scatter(
+                            x=growth_data["Quarter"],
+                            y=growth_data["Cumulative_Members"],
+                            mode="lines+markers",
+                            name=get_text(lang, "total_members", "Total Members"),
+                            line=dict(color="#1f4e79", width=3),
+                            marker=dict(size=6, color="#1f4e79"),
+                            hovertemplate="<b>%{x|%Y Q%q}</b><br>"
+                            + "Total: %{y:,} members<br>"
+                            + "<extra></extra>",
+                            yaxis="y",
+                        )
+                    )
+
+                    # New members bars (secondary axis)
+                    fig_growth.add_trace(
+                        go.Bar(
+                            x=growth_data["Quarter"],
+                            y=growth_data["New_Members"],
+                            name=get_text(lang, "new_members", "New Members"),
+                            marker=dict(color="#4472C4", opacity=0.6),
+                            hovertemplate="<b>%{x|%Y Q%q}</b><br>"
+                            + "New: %{y:,} members<br>"
+                            + "<extra></extra>",
+                            yaxis="y2",
+                        )
+                    )
+
+                    fig_growth.update_layout(
+                        title=dict(
+                            text=get_text(
+                                lang,
+                                "member_growth_analysis",
+                                "📈 Member Growth Analysis: Quarterly Trends",
                             ),
-                        },
+                            font=dict(size=16, color="#1f4e79"),
+                            x=0.5,
+                        ),
+                        xaxis=dict(
+                            title=get_text(lang, "quarter", "Quarter"),
+                            showgrid=True,
+                            gridwidth=1,
+                            gridcolor="lightgray",
+                        ),
+                        yaxis=dict(
+                            title=get_text(lang, "total_members", "Total Members"),
+                            side="left",
+                            showgrid=True,
+                            gridwidth=1,
+                            gridcolor="lightgray",
+                            color="#1f4e79",
+                        ),
+                        yaxis2=dict(
+                            title=get_text(
+                                lang, "new_members_quarter", "New Members (Quarter)"
+                            ),
+                            side="right",
+                            overlaying="y",
+                            color="#4472C4",
+                        ),
+                        height=450,
+                        plot_bgcolor="white",
+                        paper_bgcolor="white",
+                        hovermode="x unified",
+                        legend=dict(x=0.02, y=0.98),
+                        margin=dict(l=50, r=50, t=80, b=50),
                     )
-                    fig_growth.update_layout(height=400)
-                    fig_growth.update_xaxes(title=get_text(lang, "month", "Month"))
-                    fig_growth.update_yaxes(
-                        title=get_text(lang, "cumulative_members", "Cumulative Members")
-                    )
+
                     st.plotly_chart(fig_growth, use_container_width=True)
+
+                    # Enhanced growth analytics
+                    with st.expander("📊 Growth Analytics & Insights", expanded=False):
+                        total_years = (max_date - min_date).days / 365.25
+                        total_quarters = len(quarterly_joins)
+                        avg_quarterly_growth = quarterly_joins.mean()
+                        peak_quarter = quarterly_joins.idxmax()
+                        peak_growth = quarterly_joins.max()
+
+                        # Growth metrics
+                        col_a, col_b, col_c, col_d = st.columns(4)
+                        with col_a:
+                            st.metric("📅 Analysis Period", f"{total_years:.1f} years")
+                        with col_b:
+                            st.metric("📈 Total Members", f"{len(clean_members):,}")
+                        with col_c:
+                            st.metric(
+                                "📊 Avg/Quarter", f"{avg_quarterly_growth:.0f} new"
+                            )
+                        with col_d:
+                            st.metric(
+                                "🎯 Peak Quarter",
+                                f"{peak_quarter} ({peak_growth} members)",
+                            )
+
+                        # Growth phase breakdown
+                        st.markdown("**📈 Organizational Growth Phases:**")
+
+                        # Calculate growth by organizational phases
+                        current_date = pd.Timestamp.now()
+                        phases = [
+                            (
+                                "🌱 Founding Phase",
+                                10,
+                                8,
+                                "Initial establishment & core team building",
+                            ),
+                            (
+                                "📈 Early Growth",
+                                8,
+                                6,
+                                "Foundation expansion & system development",
+                            ),
+                            (
+                                "⚖️ Stabilization",
+                                6,
+                                4,
+                                "Process refinement & steady recruitment",
+                            ),
+                            (
+                                "🚀 Expansion Era",
+                                4,
+                                2,
+                                "Strategic growth & capability building",
+                            ),
+                            (
+                                "🔥 Current Phase",
+                                2,
+                                0,
+                                "Recent momentum & active recruitment",
+                            ),
+                        ]
+
+                        for phase_name, start_years, end_years, description in phases:
+                            start_date = current_date - pd.DateOffset(years=start_years)
+                            end_date = (
+                                current_date - pd.DateOffset(years=end_years)
+                                if end_years > 0
+                                else current_date
+                            )
+
+                            phase_members = clean_members[
+                                (clean_members["join_date"] >= start_date)
+                                & (clean_members["join_date"] < end_date)
+                            ]
+                            phase_count = len(phase_members)
+                            phase_pct = (
+                                (phase_count / len(clean_members)) * 100
+                                if len(clean_members) > 0
+                                else 0
+                            )
+
+                            st.markdown(
+                                f"""
+                            **{phase_name}** ({start_years}-{end_years} years ago): **{phase_count:,} members ({phase_pct:.1f}%)**  
+                            *{description}*
+                            """
+                            )
+
+                        # Growth trend analysis
+                        if (
+                            len(quarterly_joins) >= 4
+                        ):  # Need at least 4 quarters for trend
+                            recent_avg = quarterly_joins.tail(
+                                4
+                            ).mean()  # Last 4 quarters
+                            historical_avg = (
+                                quarterly_joins.head(-4).mean()
+                                if len(quarterly_joins) > 4
+                                else quarterly_joins.mean()
+                            )
+                            growth_trend = (
+                                "📈 Accelerating"
+                                if recent_avg > historical_avg * 1.1
+                                else (
+                                    "📉 Declining"
+                                    if recent_avg < historical_avg * 0.9
+                                    else "➡️ Stable"
+                                )
+                            )
+
+                            st.markdown(f"**Growth Trend:** {growth_trend}")
+                            st.markdown(
+                                f"- Recent quarters average: {recent_avg:.1f} new members"
+                            )
+                            st.markdown(
+                                f"- Historical average: {historical_avg:.1f} new members"
+                            )
+
                 else:
                     st.warning("No valid member join dates found for growth trend.")
             except Exception as e:
