@@ -156,7 +156,7 @@ class FloatingChatbot:
                     f"""
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                                 color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                        <h4 style="margin: 0; color: white;">{get_text(lang, 'chatbot_greeting', '👋 Hi! I\'m your RELA Analytics Assistant')}</h4>
+                        <h4 style="margin: 0; color: white;">{get_text(lang, 'chatbot_greeting', '👋 Hi! I am your RELA Analytics Assistant')}</h4>
                         <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">{get_text(lang, 'chatbot_prompt', 'Ask me anything about the dashboard data!')}</p>
                     </div>
                     """,
