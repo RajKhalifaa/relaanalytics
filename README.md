@@ -14,6 +14,70 @@ A comprehensive bilingual analytics dashboard for the Malaysian People's Volunte
 - **🗺️ Geographic Intelligence**: State and district-level analysis
 - **👥 Member Management**: Comprehensive volunteer tracking
 - **📋 Operations Tracking**: Success rates and resource optimization
+- **📄 AI Report Generator**: Intelligent Word/PDF report generation
+
+## 📁 Project Structure
+
+```
+RelaAnalytics/
+├── app.py                      # Main Streamlit application
+├── requirements.txt            # Python dependencies
+├── Dockerfile                  # Docker configuration
+├── docker-compose.yml          # Docker Compose setup
+├── pyproject.toml             # Project metadata
+├── README.md                  # This file
+├── LICENSE                    # Project license
+├── .env.example               # Environment variables template
+├──
+├── src/                       # Source code
+│   ├── core/                  # Core business logic
+│   │   ├── dashboard.py       # Main dashboard interface
+│   │   ├── analytics.py       # Analytics engine
+│   │   ├── ai_report_generator.py # AI report generation
+│   │   ├── chatbot.py         # Chatbot functionality
+│   │   ├── floating_chatbot.py # Floating chatbot UI
+│   │   ├── forecasting_engine.py # ML forecasting
+│   │   ├── ml_model_manager.py # ML model management
+│   │   └── predictive_analytics.py # Predictive algorithms
+│   └── utils/                 # Utility modules
+│       ├── data_generator.py  # Sample data generation
+│       ├── data_persistence.py # Data storage
+│       └── translations.py    # Bilingual support
+├──
+├── config/                    # Configuration files
+│   └── settings.py           # Application settings
+├──
+├── data/                     # Data files
+│   ├── members.csv           # Member data
+│   ├── operations.csv        # Operations data
+│   ├── assignments.csv       # Assignment data
+│   └── metadata.json         # Data metadata
+├──
+├── models/                   # ML models and artifacts
+│   ├── performance_prediction_model.pkl
+│   ├── performance_prediction_scaler.pkl
+│   ├── performance_prediction_encoders.pkl
+│   └── performance_prediction_metadata.pkl
+├──
+├── assets/                   # Static assets
+│   ├── rela_logo.jpg         # RELA logo
+│   └── rela_background.jpg   # Background image
+├──
+├── docs/                     # Documentation
+│   ├── AI_REPORT_GENERATOR_DOCUMENTATION.md
+│   ├── CHATBOT_DOCUMENTATION.md
+│   └── PROJECT_DOCUMENTATION.md
+├──
+├── scripts/                  # Deployment and utility scripts
+│   ├── build-and-push.bat    # Build and push Docker image
+│   ├── check-deployment.bat   # Check deployment status
+│   ├── deploy-huawei.sh      # Huawei Cloud deployment
+│   ├── deploy.sh             # General deployment script
+│   └── run.bat               # Local run script
+├──
+└── tests/                    # Test files
+    └── test_translations.py  # Translation tests
+```
 
 ## 🚀 Quick Start
 

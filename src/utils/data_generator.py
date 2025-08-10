@@ -276,7 +276,7 @@ class DataGenerator:
             # Simulate organizational growth: more recent hires, expansion periods
             current_year = datetime.now().year
 
-            # Create weighted periods for more realistic growth
+            # Create weighted periods for more realistic growth with better monthly distribution
             if i < num_members * 0.15:  # 15% - founding members (8-10 years ago)
                 join_date = self.fake.date_between(start_date="-10y", end_date="-8y")
             elif i < num_members * 0.35:  # 20% - early growth (6-8 years ago)
@@ -285,8 +285,14 @@ class DataGenerator:
                 join_date = self.fake.date_between(start_date="-6y", end_date="-4y")
             elif i < num_members * 0.75:  # 20% - expansion (2-4 years ago)
                 join_date = self.fake.date_between(start_date="-4y", end_date="-2y")
-            else:  # 25% - recent growth (0-2 years ago)
-                join_date = self.fake.date_between(start_date="-2y", end_date="today")
+            else:  # 25% - recent growth with better distribution across months
+                # Ensure more even distribution in recent 24 months
+                months_back = random.randint(0, 24)
+                start_date = datetime.now() - timedelta(days=months_back * 30 + 30)
+                end_date = datetime.now() - timedelta(days=months_back * 30)
+                join_date = self.fake.date_between(
+                    start_date=start_date.date(), end_date=end_date.date()
+                )
 
             years_service = (datetime.now().date() - join_date).days / 365.25
 

@@ -84,7 +84,6 @@ if "language" not in st.session_state:
 
 def render_header(lang):
     """Render the main header with RELA logo and language support"""
-    import base64
 
     # Create header with logo and title
     col1, col2, col3 = st.columns([1, 3, 1])
@@ -97,29 +96,29 @@ def render_header(lang):
             st.write("🇲🇾")  # Fallback if logo not found
 
     with col2:
-        # Try to load and encode the background image
+        # Header with background image - Fixed path for Streamlit
+        # Convert image to base64 for embedding
+        import base64
+
         try:
             with open("assets/rela_background.jpg", "rb") as img_file:
-                img_base64 = base64.b64encode(img_file.read()).decode()
-            background_style = f"background: linear-gradient(rgba(31, 78, 121, 0.85), rgba(45, 90, 160, 0.85)), url(data:image/jpeg;base64,{img_base64});"
+                bg_img_base64 = base64.b64encode(img_file.read()).decode()
+            bg_style = f"background: linear-gradient(rgba(31, 78, 121, 0.85), rgba(45, 90, 160, 0.85)), url('data:image/jpeg;base64,{bg_img_base64}');"
         except:
-            # Fallback gradient background if image not found
-            background_style = (
-                "background: linear-gradient(135deg, #1f4e79 0%, #2d5aa0 100%);"
-            )
+            # Fallback gradient if image fails to load
+            bg_style = "background: linear-gradient(135deg, #1f4e79 0%, #2d5aa0 50%, #4472C4 100%);"
 
-        # Header with background image
         st.markdown(
             f"""
         <div style="position: relative; text-align: center; padding: 25px; border-radius: 15px;
-                    {background_style}
+                    {bg_style}
                     background-size: cover; background-position: center; color: white;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
                     border: 2px solid rgba(255,255,255,0.1);">
             <h1 style="color: white; margin: 0; font-size: 3rem; text-shadow: 2px 2px 6px rgba(0,0,0,0.7); 
                        font-weight: bold; letter-spacing: 2px;">RELA MALAYSIA</h1>
             <h3 style="color: #e8f4fd; margin: 10px 0; font-size: 1.5rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
-                       font-weight: 500;">Analytics Dashboard</h3>
+                       font-weight: 500;">{get_text(lang, 'app_subtitle', 'Analytics Dashboard')}</h3>
             <p style="color: #d1e7ff; margin: 8px 0; font-size: 1.1rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
                       background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; display: inline-block;">
                 Powered by <strong>Credence AI & Analytics</strong></p>
@@ -173,13 +172,13 @@ def main():
 
         # Navigation options with translations
         nav_options = [
-            get_text(lang, "overview"),
-            get_text(lang, "member_analytics"),
-            get_text(lang, "operations"),
-            get_text(lang, "performance"),
-            get_text(lang, "regional_analysis"),
-            get_text(lang, "trends"),
-            get_text(lang, "reports"),
+            get_text(lang, "overview", "🏠 Overview"),
+            get_text(lang, "member_analytics", "👥 Member Analytics"),
+            get_text(lang, "operations", "🚨 Operations"),
+            get_text(lang, "performance", "📊 Performance"),
+            get_text(lang, "regional_analysis", "🗺️ Regional Analysis"),
+            get_text(lang, "trends", "📈 Trends"),
+            get_text(lang, "reports", "📋 Reports"),
         ]
 
         page = st.selectbox(get_text(lang, "navigation"), nav_options)
@@ -189,6 +188,7 @@ def main():
 
     # Initialize classes
     dashboard = Dashboard(lang)  # Pass language to dashboard
+    dashboard.update_language(lang)  # Ensure language is current
     analytics = Analytics()
     ai_chatbot = FloatingChatbot(lang)  # Initialize AI floating chatbot with language
     ai_chatbot.update_language(lang)  # Update language dynamically

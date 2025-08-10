@@ -47,6 +47,10 @@ class FloatingChatbot:
         if "current_page_context" not in st.session_state:
             st.session_state.current_page_context = ""
 
+    def update_language(self, language):
+        """Update the chatbot language"""
+        self.language = language
+
     def get_ai_response(self, user_message: str, context: str) -> str:
         """Get AI response using OpenAI API"""
         try:
@@ -119,6 +123,9 @@ class FloatingChatbot:
     ):
         """Render modern floating chatbot interface with icon toggle"""
 
+        # Get current language
+        lang = self.language
+
         # Only render if we have valid API key
         if not self.api_key:
             return
@@ -132,7 +139,9 @@ class FloatingChatbot:
                 if st.button(
                     "💬",
                     key="chat_toggle",
-                    help="Chat with RELA Assistant",
+                    help=get_text(
+                        lang, "chat_with_rela_assistant", "Chat with RELA Assistant"
+                    ),
                     use_container_width=True,
                 ):
                     st.session_state.chat_open = not st.session_state.chat_open
@@ -144,26 +153,35 @@ class FloatingChatbot:
             with st.expander("🤖 RELA Analytics Assistant", expanded=True):
                 # Welcome message
                 st.markdown(
-                    """
+                    f"""
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                                 color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                        <h4 style="margin: 0; color: white;">👋 Hi! I'm your RELA Analytics Assistant</h4>
-                        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Ask me anything about the dashboard data!</p>
+                        <h4 style="margin: 0; color: white;">{get_text(lang, 'chatbot_greeting', '👋 Hi! I\'m your RELA Analytics Assistant')}</h4>
+                        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">{get_text(lang, 'chatbot_prompt', 'Ask me anything about the dashboard data!')}</p>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
                 # Quick action buttons
-                st.markdown("**Quick Questions:**")
+                st.markdown(
+                    f"**{get_text(lang, 'quick_questions', 'Quick Questions')}:**"
+                )
 
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button(
-                        "📊 Key Metrics", key="quick_metrics", use_container_width=True
+                        get_text(lang, "key_metrics", "📊 Key Metrics"),
+                        key="quick_metrics",
+                        use_container_width=True,
                     ):
+                        question_text = (
+                            "Show me the key metrics and statistics"
+                            if lang == "en"
+                            else "Tunjukkan saya metrik dan statistik utama"
+                        )
                         self._process_quick_question(
-                            "Show me the key metrics and statistics",
+                            question_text,
                             members_df,
                             operations_df,
                             assignments_df,
@@ -171,10 +189,17 @@ class FloatingChatbot:
 
                 with col2:
                     if st.button(
-                        "🗺️ Top States", key="quick_states", use_container_width=True
+                        get_text(lang, "top_states", "🗺️ Top States"),
+                        key="quick_states",
+                        use_container_width=True,
                     ):
+                        question_text = (
+                            "Which states have the most RELA members?"
+                            if lang == "en"
+                            else "Negeri mana yang mempunyai ahli RELA paling ramai?"
+                        )
                         self._process_quick_question(
-                            "Which states have the most RELA members?",
+                            question_text,
                             members_df,
                             operations_df,
                             assignments_df,
@@ -183,7 +208,9 @@ class FloatingChatbot:
                 # Chat messages display
                 if st.session_state.chat_history:
                     st.markdown("---")
-                    st.markdown("**Conversation:**")
+                    st.markdown(
+                        f"**{get_text(lang, 'conversation', 'Conversation')}:**"
+                    )
 
                     # Display last 6 messages to avoid clutter
                     for message in st.session_state.chat_history[-6:]:
@@ -194,7 +221,7 @@ class FloatingChatbot:
                                     <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                                                 color: white; padding: 10px 15px; border-radius: 15px 15px 5px 15px; 
                                                 max-width: 80%; font-size: 14px;">
-                                        <strong>You:</strong> {message["content"]}
+                                        <strong>{get_text(lang, 'you', 'You')}:</strong> {message["content"]}
                                     </div>
                                 </div>
                                 """,
@@ -207,7 +234,7 @@ class FloatingChatbot:
                                     <div style="display: inline-block; background: #f8f9fa; color: #495057; 
                                                 border: 1px solid #e9ecef; padding: 10px 15px; 
                                                 border-radius: 15px 15px 15px 5px; max-width: 90%; font-size: 14px;">
-                                        <strong>🤖 Assistant:</strong> {message["content"]}
+                                        <strong>{get_text(lang, 'assistant', '🤖 Assistant')}:</strong> {message["content"]}
                                     </div>
                                 </div>
                                 """,
@@ -220,8 +247,12 @@ class FloatingChatbot:
                 # Create input form
                 with st.form("chat_form", clear_on_submit=True):
                     user_input = st.text_input(
-                        "Ask about RELA data:",
-                        placeholder="e.g., How many active members are there?",
+                        get_text(lang, "ask_about_rela_data", "Ask about RELA data:"),
+                        placeholder=get_text(
+                            lang,
+                            "ask_placeholder",
+                            "e.g., How many active members are there?",
+                        ),
                         label_visibility="collapsed",
                     )
 
@@ -229,16 +260,21 @@ class FloatingChatbot:
 
                     with col1:
                         submit_button = st.form_submit_button(
-                            "Send 📤", use_container_width=True
+                            get_text(lang, "send", "Send 📤"), use_container_width=True
                         )
 
                     with col2:
-                        if st.form_submit_button("Clear 🗑️", use_container_width=True):
+                        if st.form_submit_button(
+                            get_text(lang, "clear", "Clear 🗑️"), use_container_width=True
+                        ):
                             st.session_state.chat_history = []
                             st.rerun()
 
                     with col3:
-                        if st.form_submit_button("Close ❌", use_container_width=True):
+                        if st.form_submit_button(
+                            get_text(lang, "close", "Close ❌"),
+                            use_container_width=True,
+                        ):
                             st.session_state.chat_open = False
                             st.rerun()
 
